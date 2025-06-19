@@ -32,7 +32,7 @@ class CircuitGenerator:
                 vin = float(params.get('values', {}).get('vin', 5.0))
                 vout = float(params.get('values', {}).get('vout', 3.3))
                 
-                schematic_file = create_voltage_divider(vin, vout)
+                schematic_file = create_voltage_divider(input_voltage=vin, output_voltage=vout)
                 circuit_dir = os.path.dirname(schematic_file)
                 generated_files = [schematic_file]
                 
@@ -126,7 +126,7 @@ class CircuitGenerator:
                 name = params.get('name', 'voltage_divider')
                 vin = float(params.get('values', {}).get('vin', 5.0))
                 vout = float(params.get('values', {}).get('vout', 3.3))
-                schematic_file = create_voltage_divider(vin, vout)
+                schematic_file = create_voltage_divider(input_voltage=vin, output_voltage=vout)
                 
             elif circuit_type == 'rc_filter':
                 name = params.get('name', 'rc_filter')

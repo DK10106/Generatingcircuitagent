@@ -1,145 +1,165 @@
 # KiCad AI Circuit Generator
 
-An AI-powered interface for generating KiCad circuit files through natural language descriptions or simple button clicks.
+An AI-powered circuit generator that creates KiCad schematic files using natural language descriptions. The system uses SKiDL (SKiDL Is a Description Language) to generate circuits and outputs complete KiCad projects ready for use.
 
 ## Features
 
-- **Two Interface Options:**
-  - **Chat Interface**: Natural language circuit description input
-  - **Simple Interface**: Button-based circuit generation
-- **Easy Launcher**: Choose your interface with a simple menu
-- **Real Circuit Generation**: Creates actual KiCad schematic files
-- **Multiple Circuit Types:**
-  - Voltage Divider (5V to 3.3V conversion)
-  - RC Low-Pass Filter (configurable cutoff frequency)
-  - LED Circuit (with current limiting resistor)
-- **Automatic Downloads**: Direct download of generated schematic files
-- **KiCad Integration**: Generates proper `.kicad_sch` files
-- **Smart Parsing**: Understands natural language circuit descriptions
-
-## Prerequisites
-
-- Python 3.8 or higher
-- KiCad 6.0 or higher (optional, for viewing generated files)
-- Git (for downloading symbol libraries)
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/DK10106/Generatingcircuitagent.git
-cd Generatingcircuitagent
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+- **AI-Powered Circuit Generation**: Describe any circuit in natural language
+- **Pre-built Circuit Templates**: Quick generation of common circuits (voltage dividers, filters, LED circuits)
+- **Complete KiCad Projects**: Output is a zipped KiCad project containing `.kicad_sch` and `.kicad_pro` files
+- **User-Friendly Interface**: Streamlit web interface with chat and button-based generation
+- **Download-Ready Files**: Single ZIP download with complete KiCad project
 
 ## Quick Start
 
-### Option 1: Use the Launcher (Recommended)
+### Prerequisites
 
-1. Run the launcher script:
-```bash
-python launch.py
+- Python 3.8+
+- KiCad 7+ (for CLI functionality)
+- Ollama (for AI circuit generation)
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd Generatingcircuitagent
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Install KiCad CLI** (optional but recommended):
+   - Download and install KiCad 7+ from [kicad.org](https://kicad.org)
+   - Ensure `kicad-cli` is available in your PATH
+
+4. **Install Ollama** (for AI features):
+   - Download from [ollama.com](https://ollama.com)
+   - Install and start the Ollama service
+
+### Usage
+
+1. **Start the application**:
+   ```bash
+   streamlit run interface/chat_ui.py
+   ```
+
+2. **Open your browser** to the provided URL (usually http://localhost:8501)
+
+3. **Generate circuits**:
+   - Use the sidebar buttons for quick generation of common circuits
+   - Use the chat interface to describe custom circuits in natural language
+
+4. **Download and use**:
+   - Download the generated `.kicad_project.zip` file
+   - Extract the ZIP file
+   - Open the `.kicad_pro` file in KiCad
+   - View and edit the schematic
+
+## Circuit Types
+
+### Pre-built Circuits
+- **Voltage Divider**: Converts higher voltage to lower voltage (e.g., 5V to 3.3V)
+- **RC Low-Pass Filter**: Filters high-frequency signals with configurable cutoff frequency
+- **LED Circuit**: Simple LED with current-limiting resistor
+
+### AI-Generated Circuits
+- **Custom Circuits**: Describe any circuit in natural language
+- **Complex Designs**: Multi-component circuits with specific requirements
+- **Specialized Applications**: Sensor interfaces, power supplies, amplifiers, etc.
+
+## Output Format
+
+The system generates **complete KiCad projects** in the following format:
+
+```
+circuit_name.kicad_project.zip
+├── circuit_name.kicad_pro    # KiCad project file
+└── circuit_name.kicad_sch    # Schematic file
 ```
 
-2. Choose your preferred interface:
-   - **1**: Simple Interface (Beginner-Friendly)
-   - **2**: Chat Interface (Advanced)
-   - **3**: Test Circuit Generation
-   - **4**: Exit
+### Usage Instructions
 
-### Option 2: Direct Launch
+1. **Download** the `.kicad_project.zip` file
+2. **Extract** the ZIP file to a folder
+3. **Open KiCad** (version 7 or later)
+4. **File → Open Project** → Select the `.kicad_pro` file
+5. **Double-click** the `.kicad_pro` file to open directly
+6. **View the schematic** in the Schematic Editor
+7. **Create PCB** from the schematic if needed
 
-#### Simple Interface (Beginner-Friendly)
-```bash
-streamlit run app.py
-```
-
-#### Chat Interface (Advanced)
-```bash
-streamlit run interface/chat_ui.py
-```
-
-## Usage
-
-### Simple Interface
-1. Click the buttons to generate circuits:
-   - **Generate Voltage Divider**: Creates a 5V to 3.3V voltage divider
-   - **Generate RC Filter**: Creates a 1kHz RC low-pass filter
-   - **Generate LED Circuit**: Creates a simple LED circuit with current limiting
-2. Download the generated schematic files using the download buttons
-
-### Chat Interface
-Type your circuit description in natural language, for example:
-- "Create a voltage divider that converts 5V to 3.3V"
-- "Generate an RC low-pass filter with 1kHz cutoff frequency"
-- "Design a simple LED circuit with current limiting resistor"
-
-## Generated Files
-
-The generated KiCad files will be saved in the `kicad_output` directory:
-
-```
-kicad_output/
-├── voltage_divider/
-│   └── voltage_divider_5v_33v.kicad_sch
-├── rc_low_pass_filter/
-│   └── rc_low_pass_1000hz.kicad_sch
-└── led_circuit/
-    └── simple_led_circuit.kicad_sch
-```
-
-## Project Structure
+## File Structure
 
 ```
 Generatingcircuitagent/
 ├── interface/
-│   └── chat_ui.py          # Chat-based interface
-├── app.py                  # Simple button-based interface
-├── launch.py               # Launcher script
-├── generate_circuit.py     # Core circuit generation functions
-├── test_circuit_generation.py  # Test script
-├── requirements.txt
-└── README.md
+│   └── chat_ui.py           # Streamlit web interface
+├── generate_circuit.py      # Core circuit generation logic
+├── llm_engine.py           # AI/LLM integration
+├── kicad_wrapper.py        # KiCad file handling
+├── libraries/              # KiCad symbol libraries
+├── kicad_output/           # Generated circuit files
+└── requirements.txt        # Python dependencies
 ```
 
-## Circuit Types
+## Technical Details
 
-### 1. Voltage Divider
-- **Purpose**: Converts higher voltage to lower voltage
-- **Components**: 2 Resistors
-- **Default**: 5V to 3.3V conversion
-- **Use Case**: Logic level conversion, sensor interfacing
+### Dependencies
+- **SKiDL**: Circuit description language
+- **Streamlit**: Web interface framework
+- **Ollama**: Local LLM for AI circuit generation
+- **KiCad CLI**: Command-line tools for project creation
 
-### 2. RC Low-Pass Filter
-- **Purpose**: Filters high-frequency signals
-- **Components**: 1 Resistor, 1 Capacitor
-- **Default**: 1kHz cutoff frequency
-- **Use Case**: Signal conditioning, noise reduction
+### Circuit Generation Process
+1. **User Input**: Natural language description or circuit type selection
+2. **AI Processing**: LLM generates SKiDL code (for custom circuits)
+3. **Netlist Generation**: SKiDL creates component netlist
+4. **Project Creation**: KiCad CLI converts netlist to schematic
+5. **ZIP Packaging**: Complete project packaged for download
+6. **Cleanup**: Temporary files removed
 
-### 3. LED Circuit
-- **Purpose**: Powers LED with current limiting
-- **Components**: 1 Resistor, 1 LED
-- **Default**: 5V supply, 20mA current
-- **Use Case**: Status indicators, lighting
+### Fallback Mode
+If KiCad CLI is not available, the system falls back to generating netlist files (`.net`) that can be imported into KiCad manually.
 
-## Testing
+## Troubleshooting
 
-Run the test script to verify all circuit generation functions:
+### Common Issues
 
-```bash
-python test_circuit_generation.py
-```
+1. **KiCad CLI not found**:
+   - Install KiCad 7+ and ensure it's in your PATH
+   - The system will fall back to netlist-only output
 
-Or use the launcher and select option 3.
+2. **Ollama not running**:
+   - Start Ollama service: `ollama serve`
+   - Install required models: `ollama pull llama2`
+
+3. **Library errors**:
+   - The system automatically downloads required KiCad libraries
+   - Check internet connection for library downloads
+
+### Error Messages
+
+- **"KiCad CLI not found"**: Install KiCad 7+ or use netlist fallback
+- **"Ollama service not running"**: Start Ollama with `ollama serve`
+- **"Library download failed"**: Check internet connection and try again
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## License
 
-This project is open source and available under the MIT License. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- **SKiDL**: Circuit description language
+- **KiCad**: Open-source PCB design software
+- **Ollama**: Local LLM framework
+- **Streamlit**: Web application framework 

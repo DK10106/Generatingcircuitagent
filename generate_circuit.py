@@ -1,6 +1,10 @@
 import os
 import json
 import urllib.request
+import subprocess
+import shutil
+import tempfile
+import zipfile
 from datetime import datetime
 from skidl import *
 from skidl.pyspice import *
@@ -436,28 +440,41 @@ def create_voltage_divider(input_voltage: float = 5.0, output_voltage: float = 3
         log(f"Generating netlist: {netlist_file}")
         generate_netlist(file_=netlist_file)
         
-        # Create project file
-        if project_file:
-            log(f"✓ Created KiCad project file: {project_file}")
-        
-        # Note: Schematic generation not supported in KiCad 8
-        log("WARNING: Schematic generation is not implemented for KiCad version 8.")
-        
-        generated_files = [netlist_file]
-        if project_file:
-            generated_files.append(project_file)
-        
-        log(f"✓ Generated KiCad files in: {output_dir}")
-        log(f"✓ Voltage divider: {input_voltage}V → {output_voltage}V using R1={r1_standard}Ω, R2={r2_standard}Ω")
-        
-        return {
-            "type": "voltage_divider",
-            "name": circuit_name,
-            "circuit_dir": output_dir,
-            "generated_files": generated_files,
-            "response": f"✅ Circuit generated successfully! Voltage divider converting {input_voltage}V to {output_voltage}V using R1={r1_standard}Ω and R2={r2_standard}Ω",
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        # NEW: convert netlist to KiCad project and create ZIP
+        try:
+            zip_path = net_to_project(netlist_file, output_dir)
+            # Clean up the netlist file (optional - keep workspace clean)
+            os.remove(netlist_file)
+            
+            generated_files = [zip_path]
+            log(f"✓ Generated KiCad project ZIP: {zip_path}")
+            log(f"✓ Voltage divider: {input_voltage}V → {output_voltage}V using R1={r1_standard}Ω, R2={r2_standard}Ω")
+            
+            return {
+                "type": "voltage_divider",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(zip_path),
+                "download_path": zip_path,
+                "response": f"✅ Circuit generated successfully! Voltage divider converting {input_voltage}V to {output_voltage}V using R1={r1_standard}Ω and R2={r2_standard}Ω",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        except Exception as e:
+            log(f"Error creating KiCad project: {e}")
+            # Fallback to netlist if KiCad CLI fails
+            generated_files = [netlist_file]
+            return {
+                "type": "voltage_divider",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(netlist_file),
+                "download_path": netlist_file,
+                "response": f"✅ Circuit generated successfully! Voltage divider converting {input_voltage}V to {output_voltage}V using R1={r1_standard}Ω and R2={r2_standard}Ω (Netlist only - KiCad CLI not available)",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
         
     except Exception as e:
         log(f"Error creating voltage divider: {e}")
@@ -516,28 +533,41 @@ def create_rc_low_pass_filter(cutoff_freq: float = 1000.0) -> dict:
         log(f"Generating netlist: {netlist_file}")
         generate_netlist(file_=netlist_file)
         
-        # Create project file
-        if project_file:
-            log(f"✓ Created KiCad project file: {project_file}")
-        
-        # Note: Schematic generation not supported in KiCad 8
-        log("WARNING: Schematic generation is not implemented for KiCad version 8.")
-        
-        generated_files = [netlist_file]
-        if project_file:
-            generated_files.append(project_file)
-        
-        log(f"✓ Generated KiCad files in: {output_dir}")
-        log(f"✓ RC filter: {cutoff_freq}Hz cutoff using R={r_value}Ω, C={c_standard}F")
-        
-        return {
-            "type": "rc_filter",
-            "name": circuit_name,
-            "circuit_dir": output_dir,
-            "generated_files": generated_files,
-            "response": f"✅ Circuit generated successfully! RC low-pass filter with {cutoff_freq}Hz cutoff frequency using R={r_value}Ω and C={c_standard}F",
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        # NEW: convert netlist to KiCad project and create ZIP
+        try:
+            zip_path = net_to_project(netlist_file, output_dir)
+            # Clean up the netlist file (optional - keep workspace clean)
+            os.remove(netlist_file)
+            
+            generated_files = [zip_path]
+            log(f"✓ Generated KiCad project ZIP: {zip_path}")
+            log(f"✓ RC filter: {cutoff_freq}Hz cutoff using R={r_value}Ω, C={c_standard}F")
+            
+            return {
+                "type": "rc_filter",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(zip_path),
+                "download_path": zip_path,
+                "response": f"✅ Circuit generated successfully! RC low-pass filter with {cutoff_freq}Hz cutoff frequency using R={r_value}Ω and C={c_standard}F",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        except Exception as e:
+            log(f"Error creating KiCad project: {e}")
+            # Fallback to netlist if KiCad CLI fails
+            generated_files = [netlist_file]
+            return {
+                "type": "rc_filter",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(netlist_file),
+                "download_path": netlist_file,
+                "response": f"✅ Circuit generated successfully! RC low-pass filter with {cutoff_freq}Hz cutoff frequency using R={r_value}Ω and C={c_standard}F (Netlist only - KiCad CLI not available)",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
         
     except Exception as e:
         log(f"Error creating RC filter: {e}")
@@ -593,32 +623,83 @@ def create_led_circuit(voltage: float = 5.0, led_voltage: float = 2.0, led_curre
         log(f"Generating netlist: {netlist_file}")
         generate_netlist(file_=netlist_file)
         
-        # Create project file
-        if project_file:
-            log(f"✓ Created KiCad project file: {project_file}")
-        
-        # Note: Schematic generation not supported in KiCad 8
-        log("WARNING: Schematic generation is not implemented for KiCad version 8.")
-        
-        generated_files = [netlist_file]
-        if project_file:
-            generated_files.append(project_file)
-        
-        log(f"✓ Generated KiCad files in: {output_dir}")
-        log(f"✓ LED circuit: {voltage}V supply with R={r_standard}Ω current limiting")
-        
-        return {
-            "type": "led_circuit",
-            "name": circuit_name,
-            "circuit_dir": output_dir,
-            "generated_files": generated_files,
-            "response": f"✅ Circuit generated successfully! LED circuit with {voltage}V supply using R={r_standard}Ω current limiting resistor",
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        # NEW: convert netlist to KiCad project and create ZIP
+        try:
+            zip_path = net_to_project(netlist_file, output_dir)
+            # Clean up the netlist file (optional - keep workspace clean)
+            os.remove(netlist_file)
+            
+            generated_files = [zip_path]
+            log(f"✓ Generated KiCad project ZIP: {zip_path}")
+            log(f"✓ LED circuit: {voltage}V supply with R={r_standard}Ω current limiting")
+            
+            return {
+                "type": "led_circuit",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(zip_path),
+                "download_path": zip_path,
+                "response": f"✅ Circuit generated successfully! LED circuit with {voltage}V supply using R={r_standard}Ω current limiting resistor",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        except Exception as e:
+            log(f"Error creating KiCad project: {e}")
+            # Fallback to netlist if KiCad CLI fails
+            generated_files = [netlist_file]
+            return {
+                "type": "led_circuit",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(netlist_file),
+                "download_path": netlist_file,
+                "response": f"✅ Circuit generated successfully! LED circuit with {voltage}V supply using R={r_standard}Ω current limiting resistor (Netlist only - KiCad CLI not available)",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
         
     except Exception as e:
         log(f"Error creating LED circuit: {e}")
         return {"error": f"Failed to create LED circuit: {str(e)}"}
+
+def net_to_project(net_path: str, export_dir: str) -> str:
+    """
+    Convert SKiDL netlist to a minimal KiCad project ( .kicad_pro + .kicad_sch )
+    using kicad-cli. Return path to a zipped project for download.
+    """
+    try:
+        base = os.path.splitext(os.path.basename(net_path))[0]
+        proj_dir = os.path.join(export_dir, base)
+        os.makedirs(proj_dir, exist_ok=True)
+
+        # 1) Create empty project
+        subprocess.check_call(["kicad-cli", "pcb", "new", f"{proj_dir}/{base}.kicad_pro"])
+
+        # 2) Import netlist into schematic
+        subprocess.check_call([
+            "kicad-cli", "sch", "import-netlist",
+            "--schematic", f"{proj_dir}/{base}.kicad_sch",
+            "--netlist", net_path
+        ])
+
+        # 3) Zip project for download
+        zip_path = os.path.join(export_dir, f"{base}.kicad_project.zip")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for root, _, files in os.walk(proj_dir):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    zf.write(fp, arcname=os.path.relpath(fp, proj_dir))
+        
+        log(f"✓ Created KiCad project ZIP: {zip_path}")
+        return zip_path
+        
+    except FileNotFoundError:
+        raise Exception("❌ KiCad CLI not found – install KiCad 7+ or make it reachable in PATH.")
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"❌ KiCad CLI error: {str(e)}")
+    except Exception as e:
+        raise Exception(f"❌ Error creating project: {str(e)}")
 
 class CircuitGenerator:
     def __init__(self):
@@ -649,6 +730,10 @@ class CircuitGenerator:
             # Initialize LLM engine
             llm_engine = LLMEngine()
             
+            # If voltage divider requested
+            if 'voltage_divider' in user_request:
+                return create_voltage_divider(input_voltage=5.0, output_voltage=3.3)
+            
             # Generate circuit using LLM
             result = llm_engine.generate_and_execute_circuit(user_request)
             
@@ -665,7 +750,7 @@ if __name__ == "__main__":
     setup_kicad_env()
     
     # Create a voltage divider (5V to 3.3V)
-    netlist, project, schematic = create_voltage_divider(5.0, 3.3)
+    netlist, project, schematic = create_voltage_divider(input_voltage=5.0, output_voltage=3.3)
     
     log("\nTo use these files in KiCad:")
     log("1. Open KiCad")

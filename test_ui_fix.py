@@ -16,7 +16,7 @@ def test_circuit_functions():
         
         # Test voltage divider
         print("Testing voltage divider...")
-        result = create_voltage_divider(5.0, 3.3)
+        result = create_voltage_divider(input_voltage=5.0, output_voltage=3.3)
         if 'error' not in result:
             print(f"✅ Voltage divider: {result['name']}")
             print(f"   Files: {len(result['generated_files'])}")

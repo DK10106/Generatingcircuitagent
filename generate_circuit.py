@@ -50,6 +50,12 @@ def setup_kicad_env():
     print("[{}] Setting up KiCad environment...".format(datetime.now().strftime("%H:%M:%S")))
     
     try:
+        # Add KiCad 9 bin directory to PATH if not already there
+        kicad_bin_path = r"C:\Program Files\KiCad\9.0\bin"
+        if os.path.exists(kicad_bin_path) and kicad_bin_path not in os.environ.get('PATH', ''):
+            os.environ['PATH'] = kicad_bin_path + os.pathsep + os.environ.get('PATH', '')
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✓ Added KiCad 9 bin to PATH")
+        
         # Create libraries directory
         libraries_dir = os.path.join(os.getcwd(), 'libraries')
         os.makedirs(libraries_dir, exist_ok=True)
@@ -421,9 +427,9 @@ def create_voltage_divider(input_voltage: float = 5.0, output_voltage: float = 3
         gnd = Net('GND')      # Ground
         out = Net('OUT')      # Output voltage
         
-        # Create components with proper footprints
-        r1 = Part("Device", "R", value=f"{r1_standard}Ω", footprint="Resistor_SMD:R_0805_2012Metric")
-        r2 = Part("Device", "R", value=f"{r2_standard}Ω", footprint="Resistor_SMD:R_0805_2012Metric")
+        # Create components
+        r1 = Part("Device", "R", value=f"{r1_standard}Ω")
+        r2 = Part("Device", "R", value=f"{r2_standard}Ω")
         
         # Set component properties
         r1.ref = "R1"
@@ -514,9 +520,9 @@ def create_rc_low_pass_filter(cutoff_freq: float = 1000.0) -> dict:
         vout = Net('VOUT')    # Output signal
         gnd = Net('GND')      # Ground
         
-        # Create components with proper footprints
-        r1 = Part("Device", "R", value=f"{r_value}Ω", footprint="Resistor_SMD:R_0805_2012Metric")
-        c1 = Part("Device", "C", value=f"{c_standard}F", footprint="Capacitor_SMD:C_0805_2012Metric")
+        # Create components
+        r1 = Part("Device", "R", value=f"{r_value}Ω")
+        c1 = Part("Device", "C", value=f"{c_standard}F")
         
         # Set component properties
         r1.ref = "R1"
@@ -605,9 +611,9 @@ def create_led_circuit(voltage: float = 5.0, led_voltage: float = 2.0, led_curre
         vcc = Net('VCC')      # Supply voltage
         gnd = Net('GND')      # Ground
         
-        # Create components with proper footprints
-        r1 = Part("Device", "R", value=f"{r_standard}Ω", footprint="Resistor_SMD:R_0805_2012Metric")
-        led1 = Part("LED", "LED", value="LED", footprint="LED_SMD:LED_0805_2012Metric")
+        # Create components
+        r1 = Part("Device", "R", value=f"{r_standard}Ω")
+        led1 = Part("Device", "LED", value="LED")
         
         # Set component properties
         r1.ref = "R1"
@@ -666,22 +672,36 @@ def create_led_circuit(voltage: float = 5.0, led_voltage: float = 2.0, led_curre
 def net_to_project(net_path: str, export_dir: str) -> str:
     """
     Convert SKiDL netlist to a minimal KiCad project ( .kicad_pro + .kicad_sch )
-    using kicad-cli. Return path to a zipped project for download.
+    Since KiCad 9 CLI doesn't support import-netlist, we create a basic project structure.
+    Return path to a zipped project for download.
     """
     try:
+        # Ensure KiCad CLI is in PATH
+        kicad_bin_path = r"C:\Program Files\KiCad\9.0\bin"
+        if os.path.exists(kicad_bin_path) and kicad_bin_path not in os.environ.get('PATH', ''):
+            os.environ['PATH'] = kicad_bin_path + os.pathsep + os.environ.get('PATH', '')
+        
         base = os.path.splitext(os.path.basename(net_path))[0]
         proj_dir = os.path.join(export_dir, base)
         os.makedirs(proj_dir, exist_ok=True)
 
-        # 1) Create empty project
-        subprocess.check_call(["kicad-cli", "pcb", "new", f"{proj_dir}/{base}.kicad_pro"])
-
-        # 2) Import netlist into schematic
-        subprocess.check_call([
-            "kicad-cli", "sch", "import-netlist",
-            "--schematic", f"{proj_dir}/{base}.kicad_sch",
-            "--netlist", net_path
-        ])
+        # Create project file
+        project_file = os.path.join(proj_dir, f"{base}.kicad_pro")
+        create_kicad_project(base, proj_dir)
+        
+        # Copy the netlist to the project directory
+        netlist_dest = os.path.join(proj_dir, f"{base}.net")
+        shutil.copy2(net_path, netlist_dest)
+        
+        # Create a basic schematic file (empty for now, user can import netlist manually)
+        schematic_file = os.path.join(proj_dir, f"{base}.kicad_sch")
+        with open(schematic_file, 'w') as f:
+            f.write('(kicad_sch (version 20221018) (generator eeschema)\n')
+            f.write('  (paper "A4")\n')
+            f.write('  (lib_symbols)\n')
+            f.write('  (sheet_instances)\n')
+            f.write('  (symbol (lib_id "power:GND") (at 0 0 0) (property "Reference" "GND" (at 0 -2.54 0) (effects (font (size 1.27 1.27)))))\n')
+            f.write(')\n')
 
         # 3) Zip project for download
         zip_path = os.path.join(export_dir, f"{base}.kicad_project.zip")

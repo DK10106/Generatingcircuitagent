@@ -1,18 +1,30 @@
 WARNING: PySpice does not support Python 2, so SPICE simulation is not possible. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\<frozen importlib._bootstrap_external>:995=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\<frozen importlib._bootstrap>:488]
-ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
-ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
+ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:447]
+ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:447]
+ERROR: No footprint for R/R1_1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:447]
+ERROR: No footprint for R/R2_1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:447]
 INFO: 0 warnings found while generating netlist.
-INFO: 2 errors found while generating netlist.
+INFO: 4 errors found while generating netlist.
 
-ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
-ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
-ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
-ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
-ERROR: No footprint for R/R5. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:447]
+ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:447]
+ERROR: No footprint for R/R1_1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:447]
+ERROR: No footprint for R/R2_1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:32=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:447]
+ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R1_1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R2_1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R5. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R1_2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for C/C1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
 INFO: 0 warnings found while generating netlist.
-INFO: 3 errors found while generating netlist.
+INFO: 7 errors found while generating netlist.
 
-ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
-ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
-ERROR: No footprint for R/R5. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
-ERROR: Unable to find part LED in library LED. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:66=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:610]
+ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R1_1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R2_1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R5. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for R/R1_2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: No footprint for C/C1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:49=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:540]
+ERROR: Unable to find part LED in library LED. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\test_circuit_generation.py:66=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:616]

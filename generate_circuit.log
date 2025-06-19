@@ -1,6 +1,1 @@
-WARNING: KICAD_SYMBOL_DIR environment variable is missing, so the default KiCad symbol libraries won't be searched. @ [C:\Users\sdine\AIAgentKicad\<frozen importlib._bootstrap_external>:995=>C:\Users\sdine\AIAgentKicad\<frozen importlib._bootstrap>:488]
-WARNING: KICAD6_SYMBOL_DIR environment variable is missing, so the default KiCad symbol libraries won't be searched. @ [C:\Users\sdine\AIAgentKicad\<frozen importlib._bootstrap_external>:995=>C:\Users\sdine\AIAgentKicad\<frozen importlib._bootstrap>:488]
-WARNING: KICAD7_SYMBOL_DIR environment variable is missing, so the default KiCad symbol libraries won't be searched. @ [C:\Users\sdine\AIAgentKicad\<frozen importlib._bootstrap_external>:995=>C:\Users\sdine\AIAgentKicad\<frozen importlib._bootstrap>:488]
-WARNING: KICAD8_SYMBOL_DIR environment variable is missing, so the default KiCad symbol libraries won't be searched. @ [C:\Users\sdine\AIAgentKicad\<frozen importlib._bootstrap_external>:995=>C:\Users\sdine\AIAgentKicad\<frozen importlib._bootstrap>:488]
-INFO: No errors or warnings found while generating netlist.
-
+WARNING: PySpice does not support Python 2, so SPICE simulation is not possible. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\<frozen importlib._bootstrap_external>:995=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\<frozen importlib._bootstrap>:488]

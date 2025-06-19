@@ -10,6 +10,7 @@ import urllib.request
 import re
 import tempfile
 import traceback
+import openai
 
 class LLMEngine:
     """
@@ -504,69 +505,56 @@ except Exception as e:
         try:
             # Generate LLM response with circuit code
             prompt = f"""
-            Generate Python code using SKiDL to create this circuit: {user_request}
-            
-            Requirements for good circuit layout:
-            1. Use SKiDL library with proper imports
-            2. Create horizontal layouts that are easy to read
-            3. Use clear net naming (VCC, GND, OUT, VIN, VOUT, etc.)
-            4. Set proper component values and footprints
-            5. Add inline comments explaining the circuit
-            6. Use descriptive circuit names
-            7. Generate netlist file with proper naming
-            8. Include error handling
-            
-            Layout Guidelines:
-            - Voltage Divider: VCC → R1 → OUT → R2 → GND (horizontal)
-            - RC Filter: VIN → R → VOUT → C → GND (horizontal)
-            - LED Circuit: VCC → R → LED → GND (horizontal)
-            - Use proper component references (R1, R2, C1, D1, etc.)
-            - Add value labels to components
-            
-            Format your response with [CODE] tags:
-            [CODE]
-            # Your complete Python code here with proper layout and comments
-            [/CODE]
-            
-            Example voltage divider structure:
-            ```python
-            from skidl import *
-            
-            # Circuit setup
-            circuit_name = "voltage_divider_5v_3v3"
-            default_circuit.name = circuit_name
-            default_circuit.description = "Voltage divider converting 5V to 3.3V"
-            
-            # Define nets with clear naming
-            vcc = Net('VCC')      # Input voltage (5V)
-            gnd = Net('GND')      # Ground (0V)
-            out = Net('OUT')      # Output voltage (3.3V)
-            
-            # Create components with proper footprints
-            r1 = Part("Device", "R", value="10k", footprint="Resistor_SMD:R_0805_2012Metric")
-            r2 = Part("Device", "R", value="6.4k", footprint="Resistor_SMD:R_0805_2012Metric")
-            
-            # Set component properties
-            r1.ref = "R1"
-            r2.ref = "R2"
-            
-            # Connect in proper layout: VCC → R1 → OUT → R2 → GND
-            vcc += r1[1]          # VCC connects to R1 pin 1
-            r1[2] += out          # R1 pin 2 connects to output
-            out += r2[1]          # Output connects to R2 pin 1
-            r2[2] += gnd          # R2 pin 2 connects to ground
-            
-            # Generate netlist
-            generate_netlist(file_=f"{circuit_name}.net")
-            ```
-            
-            Make sure to:
-            - Use descriptive variable names
-            - Add comments explaining the circuit operation
-            - Create horizontal layouts for readability
-            - Set proper component values and footprints
-            - Generate netlist with circuit name
-            """
+You are a KiCad and electronics expert. Generate Python code using the SKiDL library to create the requested circuit.
+
+**IMPORTANT CONTEXT:**
+- You are using KiCad 8 with SKiDL version 2.0.1
+- Schematic generation (.kicad_sch files) is NOT supported in KiCad 8 with SKiDL
+- Only netlist generation (.net files) is supported
+- You have the following libraries available to use:
+  - **Device**: Contains common components like 'R' (resistors), 'C' (capacitors), 'D' (diodes)
+  - **power**: Contains power symbols like 'VCC' and 'GND'
+  - **LED**: Contains LED components like 'LED'
+
+**REQUIREMENTS:**
+1. Use ONLY components from the available libraries listed above
+2. Do NOT use any .lib files (outdated format)
+3. Do NOT attempt to generate schematic files
+4. Focus on creating a proper netlist with correct component connections
+5. Use clear, descriptive net names
+6. Add inline comments explaining the circuit design
+7. Use proper resistor values (standard E12 series: 10, 12, 15, 18, 22, 27, 33, 39, 47, 56, 68, 82)
+8. Use proper capacitor values (standard: 0.1µF, 1µF, 10µF, 100µF, etc.)
+
+**CODE TEMPLATE:**
+```python
+from skidl import *
+import os
+
+# Set up KiCad environment
+set_default_tool('kicad')
+
+# Create circuit components
+# Add your components here using Part("Library", "Component")
+
+# Connect components
+# Add your connections here
+
+# Generate netlist
+generate_netlist()
+```
+
+**USER REQUEST:** {user_request}
+
+Generate the complete Python code that creates this circuit. Make sure to:
+- Use only available libraries (Device, power, LED)
+- Create a functional netlist
+- Include proper component values
+- Add helpful comments
+- Handle any errors gracefully
+
+Return ONLY the Python code, no explanations.
+"""
             
             response = self.generate_response(prompt)
             code = self.extract_code_from_response(response)

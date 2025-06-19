@@ -44,142 +44,79 @@ def initialize_llm_engine():
 
 def initialize_circuit_generator():
     """Initialize the circuit generator"""
-    if st.session_state.circuit_generator is None:
-        try:
+    try:
+        if 'circuit_generator' not in st.session_state:
+            from generate_circuit import CircuitGenerator
             st.session_state.circuit_generator = CircuitGenerator()
-            return True
-        except Exception as e:
-            st.error(f"Error initializing circuit generator: {str(e)}")
-            return False
-    return True
+        return True
+    except Exception as e:
+        st.error(f"Failed to initialize circuit generator: {str(e)}")
+        return False
 
 def generate_circuit_from_llm(user_request: str):
-    """Generate circuit using LLM and execute the code"""
+    """Generate circuit using LLM"""
     try:
-        # Initialize LLM engine if not already done
-        if not initialize_llm_engine():
+        # Initialize circuit generator if not already done
+        if not initialize_circuit_generator():
+            st.error("Failed to initialize circuit generator")
             return None
-            
-        with st.spinner("🤖 AI is generating circuit code..."):
-            # Use LLM to generate and execute circuit code
-            result = st.session_state.llm_engine.generate_and_execute_circuit(user_request)
-            
-            if result['success']:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                circuit_name = result['circuit_name']
-                
-                # Create response
-                response = f"✅ Circuit generated successfully using AI!\n\n"
-                response += f"**Circuit Name:** {circuit_name}\n"
-                response += f"**Description:** {user_request}\n"
-                response += f"**Generated:** {timestamp}\n"
-                response += f"**Files Created:** {len(result['generated_files'])} files\n\n"
-                response += f"**AI Response:**\n{result['message']}\n\n"
-                
-                if result['generated_files']:
-                    response += f"Circuit files have been saved to: `{os.path.dirname(result['generated_files'][0])}`"
-                
-                # Add to circuit history
-                circuit_info = {
-                    'name': circuit_name,
-                    'type': 'ai_generated',
-                    'description': user_request,
-                    'timestamp': timestamp,
-                    'circuit_dir': os.path.dirname(result['generated_files'][0]) if result['generated_files'] else '',
-                    'generated_files': result['generated_files'],
-                    'response': response,
-                    'ai_code': result.get('code', ''),
-                    'ai_response': result.get('response', '')
-                }
-                st.session_state.circuit_history.append(circuit_info)
-                
-                return circuit_info
-            else:
-                st.error(f"❌ Circuit generation failed: {result['message']}")
-                if result.get('response'):
-                    st.text_area("AI Response:", result['response'], height=200)
-                return None
+        
+        # Get the circuit generator from session state
+        circuit_generator = st.session_state.circuit_generator
+        if not circuit_generator:
+            st.error("Circuit generator not available")
+            return None
+        
+        # Generate custom circuit using LLM
+        result = circuit_generator.generate_custom_circuit(user_request)
+        
+        if result and 'error' not in result:
+            # Add to circuit history
+            st.session_state.circuit_history.append(result)
+            return result
+        else:
+            error_msg = result.get('error', 'Failed to generate circuit') if result else 'Failed to generate circuit'
+            st.error(f"Error generating circuit: {error_msg}")
+            return None
             
     except Exception as e:
         st.error(f"Error generating circuit: {str(e)}")
+        import traceback
+        st.error(f"Traceback: {traceback.format_exc()}")
         return None
 
 def generate_simple_circuit(circuit_type: str):
-    """Generate a simple circuit using predefined functions"""
+    """Generate a simple circuit based on type"""
     try:
-        # Initialize CircuitGenerator if not already done
+        # Initialize circuit generator (this sets up the environment)
         if not initialize_circuit_generator():
+            st.error("Failed to initialize circuit generator")
             return None
-            
-        with st.spinner("Generating circuit..."):
-            if circuit_type == "voltage_divider":
-                from generate_circuit import create_voltage_divider
-                schematic_file = create_voltage_divider(5.0, 3.3)
-            elif circuit_type == "rc_filter":
-                from generate_circuit import create_rc_low_pass_filter
-                schematic_file = create_rc_low_pass_filter(1000)
-            elif circuit_type == "led_circuit":
-                from generate_circuit import create_led_circuit
-                schematic_file = create_led_circuit(5.0, 2.0, 0.020)
-            else:
-                st.error(f"Unknown circuit type: {circuit_type}")
-                return None
-            
-            # Check for generated files - look for both .net and .kicad_sch
-            generated_files = []
-            circuit_dir = ""
-            circuit_name = ""
-            
-            if schematic_file:
-                circuit_dir = os.path.dirname(schematic_file)
-                circuit_name = os.path.basename(schematic_file).replace('.kicad_sch', '')
-                
-                # Check for netlist file (this should always exist)
-                netlist_file = os.path.join(circuit_dir, f"{circuit_name}.net")
-                if os.path.exists(netlist_file):
-                    generated_files.append(netlist_file)
-                
-                # Check for project file (should exist now)
-                project_file = os.path.join(circuit_dir, f"{circuit_name}.kicad_pro")
-                if os.path.exists(project_file):
-                    generated_files.append(project_file)
-                
-                # Check for schematic file (may not exist with KiCad 8)
-                if os.path.exists(schematic_file):
-                    generated_files.append(schematic_file)
-            
-            if generated_files:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                
-                # Create response
-                response = f"✅ {circuit_type.replace('_', ' ').title()} generated successfully!\n\n"
-                response += f"**Circuit Type:** {circuit_type.replace('_', ' ').title()}\n"
-                response += f"**Circuit Name:** {circuit_name}\n"
-                response += f"**Generated:** {timestamp}\n"
-                response += f"**Files Created:** {len(generated_files)} files\n"
-                
-                for file_path in generated_files:
-                    response += f"**File:** {os.path.basename(file_path)}\n"
-                
-                # Add to circuit history
-                circuit_info = {
-                    'name': circuit_name,
-                    'type': circuit_type,
-                    'description': f"Generated {circuit_type}",
-                    'timestamp': timestamp,
-                    'circuit_dir': circuit_dir,
-                    'generated_files': generated_files,
-                    'response': response
-                }
-                st.session_state.circuit_history.append(circuit_info)
-                
-                return circuit_info
-            else:
-                st.error("Failed to generate circuit files")
-                st.error(f"Expected files in: {circuit_dir}")
-                st.error(f"Circuit name: {circuit_name}")
-                return None
-            
+        
+        # Import circuit creation functions directly
+        from generate_circuit import create_voltage_divider, create_rc_low_pass_filter, create_led_circuit
+        
+        # Generate circuit based on type
+        if circuit_type == "voltage_divider":
+            result = create_voltage_divider(5.0, 3.3)
+        elif circuit_type == "rc_filter":
+            result = create_rc_low_pass_filter(1000.0)
+        elif circuit_type == "led_circuit":
+            result = create_led_circuit(5.0)
+        else:
+            st.error(f"Unknown circuit type: {circuit_type}")
+            return None
+        
+        # Check for errors
+        if 'error' in result:
+            st.error(f"Failed to generate circuit: {result['error']}")
+            return None
+        
+        # Add to circuit history
+        st.session_state.circuit_history.append(result)
+        
+        return result
+        
     except Exception as e:
         st.error(f"Error generating circuit: {str(e)}")
         import traceback

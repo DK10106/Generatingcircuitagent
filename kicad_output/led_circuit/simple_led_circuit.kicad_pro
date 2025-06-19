@@ -1,0 +1,273 @@
+{
+  "board": {
+    "design_settings": {
+      "defaults": {
+        "board_outline_line_width": 0.1,
+        "copper_line_width": 0.2,
+        "copper_text_italic": false,
+        "copper_text_size_h": 1.5,
+        "copper_text_size_v": 1.5,
+        "copper_text_thickness": 0.3,
+        "courtyard_line_width": 0.05,
+        "dimension_units": 3,
+        "dimensions": {
+          "suppress_zeroes": false,
+          "units_format": 1
+        },
+        "drill": {
+          "oval": false,
+          "shape": 0
+        },
+        "drill_shape": 0,
+        "drill_size": 0.6,
+        "edge_cut_line_width": 0.1,
+        "fab_line_width": 0.1,
+        "fab_text_italic": false,
+        "fab_text_size_h": 1.0,
+        "fab_text_size_v": 1.0,
+        "fab_text_thickness": 0.15,
+        "footprint_text_italic": false,
+        "footprint_text_size_h": 1.0,
+        "footprint_text_size_v": 1.0,
+        "footprint_text_thickness": 0.15,
+        "graphics_text_italic": false,
+        "graphics_text_size_h": 1.5,
+        "graphics_text_size_v": 1.5,
+        "graphics_text_thickness": 0.2,
+        "grid": {
+          "origin": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "size": {
+            "x": 1.0,
+            "y": 1.0
+          },
+          "style": 0,
+          "user_grid_x": 0.0,
+          "user_grid_y": 0.0
+        },
+        "pad_to_mask_clearance": 0.0,
+        "pad_to_paste_clearance": 0.0,
+        "pad_to_paste_clearance_ratio": 0.0,
+        "pcbplotparams": {
+          "aperture_lt": false,
+          "auto_scale": false,
+          "autoscale_plot": false,
+          "blackandwhite": false,
+          "check_zone_fills": false,
+          "create_reference_images": false,
+          "disableapertmacros": false,
+          "drillshape": 1,
+          "duplicate_layers": false,
+          "exclude_edge_layer": true,
+          "fine_plot": false,
+          "format": 1,
+          "gerber_job_file": "",
+          "gerber_plot_format": 0,
+          "gerber_precision": 4,
+          "hpgl_pen_number": 1,
+          "hpgl_pen_speed": 20,
+          "hpgl_plot_format": 0,
+          "layerselection": "0x00010fc_ffffffff",
+          "line_width": 0.0,
+          "mirror_plot": false,
+          "negative_plot": false,
+          "output_directory": "",
+          "plot_footprint_refs": true,
+          "plot_footprint_values": true,
+          "plot_invisible_text": false,
+          "plot_on_all_layers_selection": "0x00000000_ffffffff",
+          "plot_pad_numbers": false,
+          "plot_reference": true,
+          "plot_sheet_reference": false,
+          "plot_value": true,
+          "ps_color": false,
+          "ps_fine_plot": false,
+          "ps_negative_plot": false,
+          "scale_adjust_x": 1.0,
+          "scale_adjust_y": 1.0,
+          "sketch_plot": false,
+          "sketch_plot_inverted": false,
+          "subtract_mask_from_silk": false,
+          "svg_precision": 4,
+          "text_default_italic": false,
+          "text_default_size": 1.5,
+          "text_default_thickness": 0.3,
+          "text_default_upright": false,
+          "use_aux_axis_as_origin": false,
+          "use_gerber_attributes": false,
+          "use_gerber_extensions": false,
+          "use_gerber_netlist": false,
+          "use_gerber_x2format": true,
+          "use_project_dir": false,
+          "via_on_silk": false,
+          "width_adjust": 0.0
+        },
+        "silk_line_width": 0.2,
+        "silk_text_italic": false,
+        "silk_text_size_h": 1.0,
+        "silk_text_size_v": 1.0,
+        "silk_text_thickness": 0.15,
+        "solder_mask_clearance": 0.0,
+        "solder_mask_min_width": 0.0,
+        "text_italic": false,
+        "text_size_h": 1.5,
+        "text_size_v": 1.5,
+        "text_thickness": 0.2,
+        "text_upright": false,
+        "zone_45_only": false,
+        "zone_hatch_style": 0,
+        "zone_keep_fill": false,
+        "zone_outline_hatch_style": 0
+      },
+      "rules": {
+        "constraint": [],
+        "rule": []
+      }
+    },
+    "layers": {
+      "copper": {
+        "0": {
+          "name": "F.Cu",
+          "type": 0
+        },
+        "31": {
+          "name": "B.Cu",
+          "type": 0
+        }
+      },
+      "technical": {
+        "10": {
+          "name": "F.SilkS",
+          "type": 1
+        },
+        "11": {
+          "name": "B.SilkS",
+          "type": 1
+        },
+        "12": {
+          "name": "F.Paste",
+          "type": 2
+        },
+        "13": {
+          "name": "B.Paste",
+          "type": 2
+        },
+        "14": {
+          "name": "F.Mask",
+          "type": 3
+        },
+        "15": {
+          "name": "B.Mask",
+          "type": 3
+        },
+        "16": {
+          "name": "Dwgs.User",
+          "type": 4
+        },
+        "17": {
+          "name": "Cmts.User",
+          "type": 4
+        },
+        "18": {
+          "name": "Eco1.User",
+          "type": 4
+        },
+        "19": {
+          "name": "Eco2.User",
+          "type": 4
+        },
+        "20": {
+          "name": "Edge.Cuts",
+          "type": 5
+        },
+        "21": {
+          "name": "Margin",
+          "type": 6
+        },
+        "22": {
+          "name": "F.CrtYd",
+          "type": 7
+        },
+        "23": {
+          "name": "B.CrtYd",
+          "type": 7
+        },
+        "24": {
+          "name": "F.Fab",
+          "type": 8
+        },
+        "25": {
+          "name": "B.Fab",
+          "type": 8
+        }
+      }
+    },
+    "setup": {
+      "stackup": {
+        "dielectric": [
+          {
+            "color": "0.8 0.8 0.8 1.0",
+            "epsilon_r": 4.5,
+            "loss_tangent": 0.02,
+            "material": "FR4",
+            "thickness": 0.2
+          }
+        ],
+        "layer": [
+          {
+            "color": "0.7 0.7 0.7 1.0",
+            "name": "F.SilkS",
+            "number": 10,
+            "type": "signal"
+          },
+          {
+            "color": "0.9 0.9 0.9 1.0",
+            "name": "F.Paste",
+            "number": 12,
+            "type": "signal"
+          },
+          {
+            "color": "0.9 0.9 0.9 1.0",
+            "name": "F.Mask",
+            "number": 14,
+            "type": "signal"
+          },
+          {
+            "color": "0.8 0.8 0.8 1.0",
+            "name": "F.Cu",
+            "number": 0,
+            "type": "signal"
+          },
+          {
+            "color": "0.8 0.8 0.8 1.0",
+            "name": "B.Cu",
+            "number": 31,
+            "type": "signal"
+          },
+          {
+            "color": "0.9 0.9 0.9 1.0",
+            "name": "B.Mask",
+            "number": 15,
+            "type": "signal"
+          },
+          {
+            "color": "0.9 0.9 0.9 1.0",
+            "name": "B.Paste",
+            "number": 13,
+            "type": "signal"
+          },
+          {
+            "color": "0.7 0.7 0.7 1.0",
+            "name": "B.SilkS",
+            "number": 11,
+            "type": "signal"
+          }
+        ]
+      }
+    }
+  },
+  "sheets": [],
+  "text_variables": {}
+}

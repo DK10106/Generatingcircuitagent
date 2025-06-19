@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Tuple
 import os
 import json
 from datetime import datetime
-from generate_circuit import create_voltage_divider, setup_kicad_env
+from generate_circuit import create_voltage_divider, create_rc_low_pass_filter, create_led_circuit, setup_kicad_env
 
 class CircuitGenerator:
     """
@@ -29,12 +29,32 @@ class CircuitGenerator:
             
             # Generate circuit based on type
             if circuit_type == 'voltage_divider':
-                vin = float(params.get('input_voltage', 5.0))
-                vout = float(params.get('output_voltage', 3.3))
+                vin = float(params.get('values', {}).get('vin', 5.0))
+                vout = float(params.get('values', {}).get('vout', 3.3))
                 
-                netlist, project, schematic = create_voltage_divider(vin, vout)
-                circuit_dir = os.path.dirname(project)
-                generated_files = [netlist, project, schematic]
+                schematic_file = create_voltage_divider(vin, vout)
+                circuit_dir = os.path.dirname(schematic_file)
+                generated_files = [schematic_file]
+                
+                return circuit_dir, generated_files
+            
+            elif circuit_type == 'rc_filter':
+                cutoff_freq = float(params.get('values', {}).get('cutoff_freq', 1000))
+                
+                schematic_file = create_rc_low_pass_filter(cutoff_freq)
+                circuit_dir = os.path.dirname(schematic_file)
+                generated_files = [schematic_file]
+                
+                return circuit_dir, generated_files
+            
+            elif circuit_type == 'led_circuit':
+                v_source = float(params.get('values', {}).get('v_source', 5.0))
+                v_led = float(params.get('values', {}).get('v_led', 2.0))
+                i_led = float(params.get('values', {}).get('i_led', 0.020))
+                
+                schematic_file = create_led_circuit(v_source, v_led, i_led)
+                circuit_dir = os.path.dirname(schematic_file)
+                generated_files = [schematic_file]
                 
                 return circuit_dir, generated_files
             
@@ -100,63 +120,51 @@ class CircuitGenerator:
         circuit_type = circuit_desc.get('circuit_type', '').lower()
         params = circuit_desc.get('parameters', {})
         
-        # Generate circuit based on type
-        if circuit_type == 'voltage_divider':
-            name = params.get('name', 'voltage_divider')
-            vin = float(params.get('values', {}).get('vin', 5.0))
-            vout = float(params.get('values', {}).get('vout', 3.3))
-            netlist_file, project_file = self.kicad.create_voltage_divider(name, vin, vout)
-            
-        elif circuit_type == 'rc_filter':
-            name = params.get('name', 'rc_filter')
-            cutoff_freq = float(params.get('values', {}).get('cutoff_freq', 1000))
-            netlist_file, project_file = self.kicad.create_rc_filter(name, cutoff_freq)
-            
-        elif circuit_type == 'custom':
-            # Handle custom circuit with explicit component definitions
-            name = params.get('name', 'custom_circuit')
-            self.kicad.create_circuit(name)
-            
-            # Create nets
-            nets = {}
-            for component in circuit_desc.get('components', []):
-                for net_name in component.get('connections', []):
-                    if net_name not in nets:
-                        nets[net_name] = self.kicad.create_net(net_name)
-            
-            # Create and connect components
-            for component in circuit_desc.get('components', []):
-                comp_type = component.get('type', '').lower()
-                value = component.get('value', '')
+        try:
+            # Generate circuit based on type using the actual functions
+            if circuit_type == 'voltage_divider':
+                name = params.get('name', 'voltage_divider')
+                vin = float(params.get('values', {}).get('vin', 5.0))
+                vout = float(params.get('values', {}).get('vout', 3.3))
+                schematic_file = create_voltage_divider(vin, vout)
                 
-                if comp_type == 'resistor':
-                    part = self.kicad.add_component("Device", "R", value=value)
-                elif comp_type == 'capacitor':
-                    part = self.kicad.add_component("Device", "C", value=value)
-                # Add more component types as needed
+            elif circuit_type == 'rc_filter':
+                name = params.get('name', 'rc_filter')
+                cutoff_freq = float(params.get('values', {}).get('cutoff_freq', 1000))
+                schematic_file = create_rc_low_pass_filter(cutoff_freq)
                 
-                # Connect component pins to nets
-                for i, net_name in enumerate(component.get('connections', [])):
-                    if net_name in nets:
-                        nets[net_name] += part[i+1]
+            elif circuit_type == 'led_circuit':
+                name = params.get('name', 'led_circuit')
+                v_source = float(params.get('values', {}).get('v_source', 5.0))
+                v_led = float(params.get('values', {}).get('v_led', 2.0))
+                i_led = float(params.get('values', {}).get('i_led', 0.020))
+                schematic_file = create_led_circuit(v_source, v_led, i_led)
+                
+            else:
+                self.log(f"Unsupported circuit type: {circuit_type}")
+                return None, []
             
-            netlist_file, project_file = self.kicad.generate_outputs(name)
-        
-        else:
-            self.log(f"Unsupported circuit type: {circuit_type}")
-            return None, []
-        
-        # Get all generated files
-        circuit_dir = os.path.dirname(netlist_file)
-        generated_files = [
-            netlist_file,
-            project_file,
-            os.path.join(circuit_dir, f"{params.get('name')}.kicad_sch")
-        ]
-        
-        self.log(f"Generated circuit files in: {circuit_dir}")
-        for f in generated_files:
-            if os.path.exists(f):
-                self.log(f"✓ Created: {os.path.basename(f)}")
-        
-        return circuit_dir, generated_files 
+            # Get circuit directory and create list of generated files
+            circuit_dir = os.path.dirname(schematic_file)
+            generated_files = [schematic_file]
+            
+            # Add netlist file if it exists
+            netlist_file = schematic_file.replace('.kicad_sch', '.net')
+            if os.path.exists(netlist_file):
+                generated_files.append(netlist_file)
+            
+            # Add project file if it exists
+            project_file = schematic_file.replace('.kicad_sch', '.kicad_pro')
+            if os.path.exists(project_file):
+                generated_files.append(project_file)
+            
+            self.log(f"Generated circuit files in: {circuit_dir}")
+            for f in generated_files:
+                if os.path.exists(f):
+                    self.log(f"✓ Created: {os.path.basename(f)}")
+            
+            return circuit_dir, generated_files
+            
+        except Exception as e:
+            self.log(f"Error generating circuit files: {str(e)}")
+            return None, [] 

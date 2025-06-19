@@ -2,6 +2,7 @@ from skidl import *
 import os
 import urllib.request
 from datetime import datetime
+import json
 
 def log(msg):
     """Log messages with timestamp"""
@@ -18,7 +19,8 @@ def setup_kicad_env():
     # Download required KiCad libraries
     required_libs = {
         'Device.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/Device.kicad_sym',
-        'power.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/power.kicad_sym'
+        'power.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/power.kicad_sym',
+        'LED.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/LED.kicad_sym'
     }
     
     for lib_name, lib_url in required_libs.items():
@@ -41,35 +43,329 @@ def setup_kicad_env():
     set_default_tool(KICAD)
     log("✓ KiCad environment setup complete")
 
+def create_kicad_project(circuit_name: str, output_dir: str) -> str:
+    """Create a KiCad project file (.kicad_pro) that can be opened directly in KiCad"""
+    project_file = os.path.join(output_dir, f"{circuit_name}.kicad_pro")
+    
+    # Create a basic KiCad project structure
+    project_data = {
+        "board": {
+            "design_settings": {
+                "defaults": {
+                    "board_outline_line_width": 0.1,
+                    "copper_line_width": 0.2,
+                    "copper_text_italic": False,
+                    "copper_text_size_h": 1.5,
+                    "copper_text_size_v": 1.5,
+                    "copper_text_thickness": 0.3,
+                    "courtyard_line_width": 0.05,
+                    "dimension_units": 3,
+                    "dimensions": {
+                        "suppress_zeroes": False,
+                        "units_format": 1
+                    },
+                    "drill": {
+                        "oval": False,
+                        "shape": 0
+                    },
+                    "drill_shape": 0,
+                    "drill_size": 0.6,
+                    "edge_cut_line_width": 0.1,
+                    "fab_line_width": 0.1,
+                    "fab_text_italic": False,
+                    "fab_text_size_h": 1.0,
+                    "fab_text_size_v": 1.0,
+                    "fab_text_thickness": 0.15,
+                    "footprint_text_italic": False,
+                    "footprint_text_size_h": 1.0,
+                    "footprint_text_size_v": 1.0,
+                    "footprint_text_thickness": 0.15,
+                    "graphics_text_italic": False,
+                    "graphics_text_size_h": 1.5,
+                    "graphics_text_size_v": 1.5,
+                    "graphics_text_thickness": 0.2,
+                    "grid": {
+                        "origin": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "size": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "style": 0,
+                        "user_grid_x": 0.0,
+                        "user_grid_y": 0.0
+                    },
+                    "pad_to_mask_clearance": 0.0,
+                    "pad_to_paste_clearance": 0.0,
+                    "pad_to_paste_clearance_ratio": 0.0,
+                    "pcbplotparams": {
+                        "aperture_lt": False,
+                        "auto_scale": False,
+                        "autoscale_plot": False,
+                        "blackandwhite": False,
+                        "check_zone_fills": False,
+                        "create_reference_images": False,
+                        "disableapertmacros": False,
+                        "drillshape": 1,
+                        "duplicate_layers": False,
+                        "exclude_edge_layer": True,
+                        "fine_plot": False,
+                        "format": 1,
+                        "gerber_job_file": "",
+                        "gerber_plot_format": 0,
+                        "gerber_precision": 4,
+                        "hpgl_pen_number": 1,
+                        "hpgl_pen_speed": 20,
+                        "hpgl_plot_format": 0,
+                        "layerselection": "0x00010fc_ffffffff",
+                        "line_width": 0.0,
+                        "mirror_plot": False,
+                        "negative_plot": False,
+                        "output_directory": "",
+                        "plot_footprint_refs": True,
+                        "plot_footprint_values": True,
+                        "plot_invisible_text": False,
+                        "plot_on_all_layers_selection": "0x00000000_ffffffff",
+                        "plot_pad_numbers": False,
+                        "plot_reference": True,
+                        "plot_sheet_reference": False,
+                        "plot_value": True,
+                        "ps_color": False,
+                        "ps_fine_plot": False,
+                        "ps_negative_plot": False,
+                        "scale_adjust_x": 1.0,
+                        "scale_adjust_y": 1.0,
+                        "sketch_plot": False,
+                        "sketch_plot_inverted": False,
+                        "subtract_mask_from_silk": False,
+                        "svg_precision": 4,
+                        "text_default_italic": False,
+                        "text_default_size": 1.5,
+                        "text_default_thickness": 0.3,
+                        "text_default_upright": False,
+                        "use_aux_axis_as_origin": False,
+                        "use_gerber_attributes": False,
+                        "use_gerber_extensions": False,
+                        "use_gerber_netlist": False,
+                        "use_gerber_x2format": True,
+                        "use_project_dir": False,
+                        "via_on_silk": False,
+                        "width_adjust": 0.0
+                    },
+                    "silk_line_width": 0.2,
+                    "silk_text_italic": False,
+                    "silk_text_size_h": 1.0,
+                    "silk_text_size_v": 1.0,
+                    "silk_text_thickness": 0.15,
+                    "solder_mask_clearance": 0.0,
+                    "solder_mask_min_width": 0.0,
+                    "text_italic": False,
+                    "text_size_h": 1.5,
+                    "text_size_v": 1.5,
+                    "text_thickness": 0.2,
+                    "text_upright": False,
+                    "zone_45_only": False,
+                    "zone_hatch_style": 0,
+                    "zone_keep_fill": False,
+                    "zone_outline_hatch_style": 0
+                },
+                "rules": {
+                    "constraint": [],
+                    "rule": []
+                }
+            },
+            "layers": {
+                "copper": {
+                    "0": {
+                        "name": "F.Cu",
+                        "type": 0
+                    },
+                    "31": {
+                        "name": "B.Cu",
+                        "type": 0
+                    }
+                },
+                "technical": {
+                    "10": {
+                        "name": "F.SilkS",
+                        "type": 1
+                    },
+                    "11": {
+                        "name": "B.SilkS",
+                        "type": 1
+                    },
+                    "12": {
+                        "name": "F.Paste",
+                        "type": 2
+                    },
+                    "13": {
+                        "name": "B.Paste",
+                        "type": 2
+                    },
+                    "14": {
+                        "name": "F.Mask",
+                        "type": 3
+                    },
+                    "15": {
+                        "name": "B.Mask",
+                        "type": 3
+                    },
+                    "16": {
+                        "name": "Dwgs.User",
+                        "type": 4
+                    },
+                    "17": {
+                        "name": "Cmts.User",
+                        "type": 4
+                    },
+                    "18": {
+                        "name": "Eco1.User",
+                        "type": 4
+                    },
+                    "19": {
+                        "name": "Eco2.User",
+                        "type": 4
+                    },
+                    "20": {
+                        "name": "Edge.Cuts",
+                        "type": 5
+                    },
+                    "21": {
+                        "name": "Margin",
+                        "type": 6
+                    },
+                    "22": {
+                        "name": "F.CrtYd",
+                        "type": 7
+                    },
+                    "23": {
+                        "name": "B.CrtYd",
+                        "type": 7
+                    },
+                    "24": {
+                        "name": "F.Fab",
+                        "type": 8
+                    },
+                    "25": {
+                        "name": "B.Fab",
+                        "type": 8
+                    }
+                }
+            },
+            "setup": {
+                "stackup": {
+                    "dielectric": [
+                        {
+                            "color": "0.8 0.8 0.8 1.0",
+                            "epsilon_r": 4.5,
+                            "loss_tangent": 0.02,
+                            "material": "FR4",
+                            "thickness": 0.2
+                        }
+                    ],
+                    "layer": [
+                        {
+                            "color": "0.7 0.7 0.7 1.0",
+                            "name": "F.SilkS",
+                            "number": 10,
+                            "type": "signal"
+                        },
+                        {
+                            "color": "0.9 0.9 0.9 1.0",
+                            "name": "F.Paste",
+                            "number": 12,
+                            "type": "signal"
+                        },
+                        {
+                            "color": "0.9 0.9 0.9 1.0",
+                            "name": "F.Mask",
+                            "number": 14,
+                            "type": "signal"
+                        },
+                        {
+                            "color": "0.8 0.8 0.8 1.0",
+                            "name": "F.Cu",
+                            "number": 0,
+                            "type": "signal"
+                        },
+                        {
+                            "color": "0.8 0.8 0.8 1.0",
+                            "name": "B.Cu",
+                            "number": 31,
+                            "type": "signal"
+                        },
+                        {
+                            "color": "0.9 0.9 0.9 1.0",
+                            "name": "B.Mask",
+                            "number": 15,
+                            "type": "signal"
+                        },
+                        {
+                            "color": "0.9 0.9 0.9 1.0",
+                            "name": "B.Paste",
+                            "number": 13,
+                            "type": "signal"
+                        },
+                        {
+                            "color": "0.7 0.7 0.7 1.0",
+                            "name": "B.SilkS",
+                            "number": 11,
+                            "type": "signal"
+                        }
+                    ]
+                }
+            }
+        },
+        "sheets": [],
+        "text_variables": {}
+    }
+    
+    # Write the project file
+    with open(project_file, 'w', encoding='utf-8') as f:
+        json.dump(project_data, f, indent=2)
+    
+    log(f"✓ Created KiCad project file: {project_file}")
+    return project_file
+
 def create_voltage_divider(vin=5.0, vout=3.3):
-    """Create a voltage divider circuit"""
-    # Calculate resistor values (using 10k for R1)
-    r1_value = 10000  # 10k
+    """Create a voltage divider circuit with proper horizontal layout and return the schematic file path."""
+    # Calculate resistor values for voltage divider
+    # Using R1 = 10k, calculate R2 for desired output voltage
+    r1_value = 10000  # 10k resistor
     r2_value = int(r1_value * (vout / (vin - vout)))
     
     # Create output directory
     output_dir = os.path.join(os.getcwd(), 'kicad_output', 'voltage_divider')
     os.makedirs(output_dir, exist_ok=True)
     
-    # Set up circuit
+    # Set up circuit with descriptive name
     circuit_name = f'voltage_divider_{int(vin)}v_{int(vout*10)}v'
     default_circuit.name = circuit_name
-    default_circuit.description = f"Voltage divider {vin}V to {vout}V"
+    default_circuit.description = f"Voltage divider converting {vin}V to {vout}V using {r1_value/1000}k and {r2_value/1000}k resistors"
     
-    # Create nets
-    vcc = Net('VCC')
-    gnd = Net('GND')
-    out = Net('OUT')
+    # Define nets with clear naming
+    vcc = Net('VCC')      # Input voltage (5V)
+    gnd = Net('GND')      # Ground (0V)
+    out = Net('OUT')      # Output voltage (3.3V)
     
-    # Create components with footprints
+    # Create components with proper footprints
     r1 = Part("Device", "R", value=f"{r1_value}", footprint="Resistor_SMD:R_0805_2012Metric")
     r2 = Part("Device", "R", value=f"{r2_value}", footprint="Resistor_SMD:R_0805_2012Metric")
     
-    # Make connections
-    vcc += r1[1]
-    r1[2] += out
-    out += r2[1]
-    r2[2] += gnd
+    # Set component properties for better identification
+    r1.ref = "R1"
+    r2.ref = "R2"
+    r1.value = f"{r1_value}"
+    r2.value = f"{r2_value}"
+    
+    # Connect components in proper voltage divider layout: VCC → R1 → OUT → R2 → GND
+    # This creates a horizontal layout that's easy to read
+    vcc += r1[1]          # VCC connects to R1 pin 1
+    r1[2] += out          # R1 pin 2 connects to output
+    out += r2[1]          # Output connects to R2 pin 1
+    r2[2] += gnd          # R2 pin 2 connects to ground
     
     # Generate KiCad files
     netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
@@ -77,220 +373,117 @@ def create_voltage_divider(vin=5.0, vout=3.3):
     generate_netlist(file_=netlist_file)
     
     # Create KiCad project file
-    project_file = os.path.join(output_dir, f"{circuit_name}.kicad_pro")
-    with open(project_file, 'w') as f:
-        f.write('''{
-  "board": {
-    "design_settings": {
-      "defaults": {
-        "board_outline_line_width": 0.1,
-        "copper_line_width": 0.2,
-        "copper_text_size_h": 1.5,
-        "copper_text_size_v": 1.5,
-        "copper_text_thickness": 0.3,
-        "copper_text_upright": false,
-        "courtyard_line_width": 0.05,
-        "dimension_precision": 4,
-        "dimension_units": 3,
-        "dimensions": {
-          "arrow_length": 1270000,
-          "extension_offset": 500000,
-          "keep_text_aligned": true,
-          "suppress_zeroes": false,
-          "text_position": 0,
-          "units_format": 1
-        }
-      }
-    }
-  },
-  "meta": {
-    "filename": "circuit.kicad_pro",
-    "version": 1
-  },
-  "net_settings": {
-    "classes": [
-      {
-        "bus_width": 12.0,
-        "clearance": 0.2,
-        "diff_pair_gap": 0.25,
-        "diff_pair_via_gap": 0.25,
-        "diff_pair_width": 0.2,
-        "line_style": 0,
-        "microvia_diameter": 0.3,
-        "microvia_drill": 0.1,
-        "name": "Default",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.25,
-        "via_diameter": 0.8,
-        "via_drill": 0.4,
-        "wire_width": 6.0
-      }
-    ],
-    "meta": {
-      "version": 2
-    }
-  },
-  "schematic": {
-    "drawing": {
-      "default_line_thickness": 6.0,
-      "default_text_size": 50.0,
-      "field_names": [],
-      "intersheets_ref_own_page": false,
-      "intersheets_ref_prefix": "",
-      "intersheets_ref_short": false,
-      "intersheets_ref_show": false,
-      "intersheets_ref_suffix": "",
-      "junction_size_choice": 3,
-      "label_size_ratio": 0.25,
-      "pin_symbol_size": 0.0,
-      "text_offset_ratio": 0.08
-    }
-  }
-}''')
+    project_file = create_kicad_project(circuit_name, output_dir)
     
-    # Create schematic file with component placement
+    # Create schematic file 
     schematic_file = os.path.join(output_dir, f"{circuit_name}.kicad_sch")
-    with open(schematic_file, 'w') as f:
-        f.write(f'''(kicad_sch (version 20211123) (generator skidl)
-  (paper "A4")
-  (title_block
-    (title "{circuit_name}")
-    (date "{datetime.now().strftime('%Y-%m-%d')}")
-    (rev "v1.0")
-    (company "Generated by KiCad AI Assistant")
-  )
-  (lib_symbols
-    (symbol "Device:R" (pin_numbers hide) (pin_names (offset 0)) (in_bom yes) (on_board yes)
-      (property "Reference" "R" (id 0) (at 2.032 0 90)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "R" (id 1) (at 0 0 90)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (id 2) (at -1.778 0 90)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "~" (id 3) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_keywords" "R res resistor" (id 4) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_description" "Resistor" (id 5) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_fp_filters" "R_*" (id 6) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "R_0_1"
-        (rectangle (start -1.016 -2.54) (end 1.016 2.54)
-          (stroke (width 0.254) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-      )
-      (symbol "R_1_1"
-        (pin passive line (at 0 3.81 270) (length 1.27)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at 0 -3.81 90) (length 1.27)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "2" (effects (font (size 1.27 1.27))))
-        )
-      )
-    )
-  )
-  (wire (pts (xy 127 88.9) (xy 127 96.52)) (stroke (width 0) (type default) (color 0 0 0 0)))
-  (wire (pts (xy 127 109.22) (xy 127 116.84)) (stroke (width 0) (type default) (color 0 0 0 0)))
-  (wire (pts (xy 127 129.54) (xy 127 137.16)) (stroke (width 0) (type default) (color 0 0 0 0)))
-  (symbol (lib_id "Device:R") (at 127 100.33 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid "1234a")
-    (property "Reference" "R1" (id 0) (at 129.54 99.06 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "{r1_value}" (id 1) (at 129.54 101.6 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Resistor_SMD:R_0805_2012Metric" (id 2) (at 125.222 100.33 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid "1234b"))
-    (pin "2" (uuid "1234c"))
-  )
-  (symbol (lib_id "Device:R") (at 127 125.73 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid "5678a")
-    (property "Reference" "R2" (id 0) (at 129.54 124.46 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "{r2_value}" (id 1) (at 129.54 127 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Resistor_SMD:R_0805_2012Metric" (id 2) (at 125.222 125.73 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid "5678b"))
-    (pin "2" (uuid "5678c"))
-  )
-  (label "VCC" (at 127 88.9 0)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-  )
-  (label "OUT" (at 127 109.22 0)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-  )
-  (label "GND" (at 127 137.16 0)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-  )
-)''')
-    
-    # Create PCB file
-    pcb_file = os.path.join(output_dir, f"{circuit_name}.kicad_pcb")
-    with open(pcb_file, 'w') as f:
-        f.write(f'''(kicad_pcb (version 20211014) (generator pcbnew)
-  (general
-    (thickness 1.6)
-  )
-  (paper "A4")
-  (title_block
-    (title "{circuit_name}")
-    (date "{datetime.now().strftime('%Y-%m-%d')}")
-    (rev "v1.0")
-    (company "Generated by KiCad AI Assistant")
-  )
-  (layers
-    (0 "F.Cu" signal)
-    (31 "B.Cu" signal)
-    (32 "B.Adhes" user "B.Adhesive")
-    (33 "F.Adhes" user "F.Adhesive")
-    (34 "B.Paste" user)
-    (35 "F.Paste" user)
-    (36 "B.SilkS" user "B.Silkscreen")
-    (37 "F.SilkS" user "F.Silkscreen")
-    (38 "B.Mask" user)
-    (39 "F.Mask" user)
-    (40 "Dwgs.User" user "User.Drawings")
-    (41 "Cmts.User" user "User.Comments")
-    (42 "Eco1.User" user "User.Eco1")
-    (43 "Eco2.User" user "User.Eco2")
-    (44 "Edge.Cuts" user)
-    (45 "Margin" user)
-    (46 "B.CrtYd" user "B.Courtyard")
-    (47 "F.CrtYd" user "F.Courtyard")
-    (48 "B.Fab" user)
-    (49 "F.Fab" user)
-  )
-)''')
+    generate_schematic(file_=schematic_file)
     
     log(f"✓ Generated KiCad files in: {output_dir}")
-    log(f"✓ Files created:")
-    log(f"  - {os.path.basename(netlist_file)}")
-    log(f"  - {os.path.basename(project_file)}")
-    log(f"  - {os.path.basename(schematic_file)}")
-    log(f"  - {os.path.basename(pcb_file)}")
+    log(f"✓ Voltage divider: {vin}V → {vout}V using R1={r1_value}Ω, R2={r2_value}Ω")
+    return schematic_file
+
+def create_rc_low_pass_filter(cutoff_freq=1000):
+    """Create an RC low-pass filter with proper horizontal layout and return the schematic file path."""
+    # Calculate component values for RC low-pass filter
+    # Cutoff frequency: f = 1/(2πRC)
+    # Using C = 0.1µF, calculate R for desired cutoff frequency
+    c_value = 0.1e-6  # 0.1µF capacitor
+    r_value = int(1 / (2 * 3.14159 * cutoff_freq * c_value))
+
+    output_dir = os.path.join(os.getcwd(), 'kicad_output', 'rc_low_pass_filter')
+    os.makedirs(output_dir, exist_ok=True)
     
-    return netlist_file, project_file, schematic_file
+    circuit_name = f'rc_low_pass_{cutoff_freq}hz'
+    default_circuit.name = circuit_name
+    default_circuit.description = f"RC Low-Pass Filter with {cutoff_freq}Hz cutoff using {r_value}Ω and {c_value*1e6}µF"
+    
+    # Define nets with clear naming
+    vin = Net('VIN')      # Input signal
+    vout = Net('VOUT')    # Output signal (filtered)
+    gnd = Net('GND')      # Ground reference
+    
+    # Create components with proper footprints
+    r = Part('Device', 'R', value=f'{r_value} Ohms', footprint='Resistor_SMD:R_0805_2012Metric')
+    c = Part('Device', 'C', value=f'{c_value*1e6}µF', footprint='Capacitor_SMD:C_0805_2012Metric')
+    
+    # Set component properties for better identification
+    r.ref = "R1"
+    c.ref = "C1"
+    r.value = f"{r_value}Ω"
+    c.value = f"{c_value*1e6}µF"
+    
+    # Connect components in proper RC filter layout: VIN → R → VOUT → C → GND
+    # This creates a horizontal layout: Input → Resistor → Output → Capacitor → Ground
+    vin += r[1]           # Input connects to resistor pin 1
+    r[2] += vout          # Resistor pin 2 connects to output
+    vout += c[1]          # Output connects to capacitor pin 1
+    gnd += c[2]           # Ground connects to capacitor pin 2
+
+    # Generate KiCad files
+    netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
+    log(f"Generating netlist: {netlist_file}")
+    generate_netlist(file_=netlist_file)
+    
+    # Create KiCad project file
+    project_file = create_kicad_project(circuit_name, output_dir)
+    
+    # Create schematic file 
+    schematic_file = os.path.join(output_dir, f"{circuit_name}.kicad_sch")
+    generate_schematic(file_=schematic_file)
+    
+    log(f"✓ Generated KiCad files in: {output_dir}")
+    log(f"✓ RC filter: {cutoff_freq}Hz cutoff using R={r_value}Ω, C={c_value*1e6}µF")
+    return schematic_file
+
+def create_led_circuit(v_source=5.0, v_led=2.0, i_led=0.020):
+    """Create a simple LED circuit with current limiting resistor and proper horizontal layout."""
+    # Calculate the current-limiting resistor value
+    # R = (V_source - V_LED) / I_LED
+    r_value = int((v_source - v_led) / i_led)
+    
+    output_dir = os.path.join(os.getcwd(), 'kicad_output', 'led_circuit')
+    os.makedirs(output_dir, exist_ok=True)
+
+    circuit_name = 'simple_led_circuit'
+    default_circuit.name = circuit_name
+    default_circuit.description = f"LED circuit with current limiting: {v_source}V → {v_led}V LED at {i_led*1000}mA using {r_value}Ω resistor"
+    
+    # Define nets with clear naming
+    vcc = Net('VCC')      # Power supply (5V)
+    gnd = Net('GND')      # Ground (0V)
+    
+    # Create components with proper footprints
+    r = Part('Device', 'R', value=f'{r_value} Ohms', footprint='Resistor_SMD:R_0805_2012Metric')
+    d = Part('Device', 'LED', footprint='LED_SMD:LED_0805_2012Metric')
+    
+    # Set component properties for better identification
+    r.ref = "R1"
+    d.ref = "D1"
+    r.value = f"{r_value}Ω"
+    d.value = "LED"
+    
+    # Connect components in proper LED circuit layout: VCC → R → LED → GND
+    # This creates a horizontal layout: Power → Resistor → LED → Ground
+    vcc += r[1]           # VCC connects to resistor pin 1
+    r[2] += d[1]          # Resistor pin 2 connects to LED anode
+    d[2] += gnd           # LED cathode connects to ground
+
+    # Generate KiCad files
+    netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
+    log(f"Generating netlist: {netlist_file}")
+    generate_netlist(file_=netlist_file)
+    
+    # Create KiCad project file
+    project_file = create_kicad_project(circuit_name, output_dir)
+    
+    # Create schematic file 
+    schematic_file = os.path.join(output_dir, f"{circuit_name}.kicad_sch")
+    generate_schematic(file_=schematic_file)
+    
+    log(f"✓ Generated KiCad files in: {output_dir}")
+    log(f"✓ LED circuit: {v_source}V → {v_led}V LED at {i_led*1000}mA using R={r_value}Ω")
+    return schematic_file
 
 if __name__ == "__main__":
     # Set up KiCad environment

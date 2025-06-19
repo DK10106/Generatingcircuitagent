@@ -1,0 +1,18 @@
+INFO: No errors or warnings found while generating netlist.
+
+WARNING: Schematic generation is not implemented for KiCad version 8. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\circuit_generator.py:129=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:380]
+INFO: 1 warnings found while generating schematic.
+INFO: 0 errors found while generating schematic.
+
+INFO: No errors or warnings found while generating netlist.
+
+WARNING: Schematic generation is not implemented for KiCad version 8. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\circuit_generator.py:134=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:433]
+INFO: 1 warnings found while generating schematic.
+INFO: 0 errors found while generating schematic.
+
+INFO: No errors or warnings found while generating netlist.
+
+WARNING: Schematic generation is not implemented for KiCad version 8. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\circuit_generator.py:141=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:482]
+INFO: 1 warnings found while generating schematic.
+INFO: 0 errors found while generating schematic.
+

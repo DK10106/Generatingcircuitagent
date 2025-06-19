@@ -5,6 +5,8 @@ import subprocess
 import shutil
 import tempfile
 import zipfile
+import re
+import uuid
 from datetime import datetime
 from skidl import *
 from skidl.pyspice import *
@@ -48,25 +50,21 @@ def log(msg):
 def setup_kicad_env():
     """Setup KiCad environment and download required libraries"""
     print("[{}] Setting up KiCad environment...".format(datetime.now().strftime("%H:%M:%S")))
-    
     try:
         # Add KiCad 9 bin directory to PATH if not already there
         kicad_bin_path = r"C:\Program Files\KiCad\9.0\bin"
         if os.path.exists(kicad_bin_path) and kicad_bin_path not in os.environ.get('PATH', ''):
             os.environ['PATH'] = kicad_bin_path + os.pathsep + os.environ.get('PATH', '')
             print(f"[{datetime.now().strftime('%H:%M:%S')}] ✓ Added KiCad 9 bin to PATH")
-        
         # Create libraries directory
         libraries_dir = os.path.join(os.getcwd(), 'libraries')
         os.makedirs(libraries_dir, exist_ok=True)
-        
         # Required libraries with their URLs
         required_libs = {
             'Device.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/Device.kicad_sym',
             'power.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/power.kicad_sym',
             'LED.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/LED.kicad_sym'
         }
-        
         # Download missing libraries
         for lib_name, lib_url in required_libs.items():
             lib_path = os.path.join(libraries_dir, lib_name)
@@ -80,7 +78,6 @@ def setup_kicad_env():
                     return False
             else:
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] ✓ {lib_name} already exists")
-        
         # Add the local libraries directory to skidl's search path
         from skidl import lib_search_paths
         if isinstance(lib_search_paths, list):
@@ -88,10 +85,8 @@ def setup_kicad_env():
         else:
             # If it's a dict, convert to list and add
             lib_search_paths = [os.path.abspath(libraries_dir)]
-        
         # Set default tool to KiCad
         set_default_tool(KICAD)
-        
         # Test library loading
         try:
             # Test if we can load a basic component
@@ -101,7 +96,6 @@ def setup_kicad_env():
         except Exception as e:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] ✗ Library test failed: {e}")
             return False
-            
     except Exception as e:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] ✗ KiCad environment setup failed: {e}")
         return False
@@ -112,20 +106,20 @@ def create_kicad_project(circuit_name: str, output_dir: str) -> str:
     
     # Create a basic KiCad project structure
     project_data = {
-        "board": {
-            "design_settings": {
-                "defaults": {
-                    "board_outline_line_width": 0.1,
-                    "copper_line_width": 0.2,
+  "board": {
+    "design_settings": {
+      "defaults": {
+        "board_outline_line_width": 0.1,
+        "copper_line_width": 0.2,
                     "copper_text_italic": False,
-                    "copper_text_size_h": 1.5,
-                    "copper_text_size_v": 1.5,
-                    "copper_text_thickness": 0.3,
-                    "courtyard_line_width": 0.05,
-                    "dimension_units": 3,
-                    "dimensions": {
+        "copper_text_size_h": 1.5,
+        "copper_text_size_v": 1.5,
+        "copper_text_thickness": 0.3,
+        "courtyard_line_width": 0.05,
+        "dimension_units": 3,
+        "dimensions": {
                         "suppress_zeroes": False,
-                        "units_format": 1
+          "units_format": 1
                     },
                     "drill": {
                         "oval": False,
@@ -448,7 +442,7 @@ def create_voltage_divider(input_voltage: float = 5.0, output_voltage: float = 3
         
         # NEW: convert netlist to KiCad project and create ZIP
         try:
-            zip_path = net_to_project(netlist_file, output_dir)
+            zip_path = net_to_project(netlist_file)
             # Clean up the netlist file (optional - keep workspace clean)
             os.remove(netlist_file)
             
@@ -541,7 +535,7 @@ def create_rc_low_pass_filter(cutoff_freq: float = 1000.0) -> dict:
         
         # NEW: convert netlist to KiCad project and create ZIP
         try:
-            zip_path = net_to_project(netlist_file, output_dir)
+            zip_path = net_to_project(netlist_file)
             # Clean up the netlist file (optional - keep workspace clean)
             os.remove(netlist_file)
             
@@ -631,7 +625,7 @@ def create_led_circuit(voltage: float = 5.0, led_voltage: float = 2.0, led_curre
         
         # NEW: convert netlist to KiCad project and create ZIP
         try:
-            zip_path = net_to_project(netlist_file, output_dir)
+            zip_path = net_to_project(netlist_file)
             # Clean up the netlist file (optional - keep workspace clean)
             os.remove(netlist_file)
             
@@ -669,57 +663,123 @@ def create_led_circuit(voltage: float = 5.0, led_voltage: float = 2.0, led_curre
         log(f"Error creating LED circuit: {e}")
         return {"error": f"Failed to create LED circuit: {str(e)}"}
 
-def net_to_project(net_path: str, export_dir: str) -> str:
+def net_to_project(netlist_path):
     """
-    Convert SKiDL netlist to a minimal KiCad project ( .kicad_pro + .kicad_sch )
-    Since KiCad 9 CLI doesn't support import-netlist, we create a basic project structure.
-    Return path to a zipped project for download.
+    Creates a full KiCad project from a SKiDL-generated netlist,
+    including a graphically drawn schematic.
     """
-    try:
-        # Ensure KiCad CLI is in PATH
-        kicad_bin_path = r"C:\Program Files\KiCad\9.0\bin"
-        if os.path.exists(kicad_bin_path) and kicad_bin_path not in os.environ.get('PATH', ''):
-            os.environ['PATH'] = kicad_bin_path + os.pathsep + os.environ.get('PATH', '')
-        
-        base = os.path.splitext(os.path.basename(net_path))[0]
-        proj_dir = os.path.join(export_dir, base)
-        os.makedirs(proj_dir, exist_ok=True)
+    project_name = os.path.splitext(os.path.basename(netlist_path))[0]
+    project_dir = os.path.join("kicad_projects", project_name)
+    if os.path.exists(project_dir):
+        shutil.rmtree(project_dir)
+    os.makedirs(project_dir)
 
-        # Create project file
-        project_file = os.path.join(proj_dir, f"{base}.kicad_pro")
-        create_kicad_project(base, proj_dir)
-        
-        # Copy the netlist to the project directory
-        netlist_dest = os.path.join(proj_dir, f"{base}.net")
-        shutil.copy2(net_path, netlist_dest)
-        
-        # Create a basic schematic file (empty for now, user can import netlist manually)
-        schematic_file = os.path.join(proj_dir, f"{base}.kicad_sch")
-        with open(schematic_file, 'w') as f:
-            f.write('(kicad_sch (version 20221018) (generator eeschema)\n')
-            f.write('  (paper "A4")\n')
-            f.write('  (lib_symbols)\n')
-            f.write('  (sheet_instances)\n')
-            f.write('  (symbol (lib_id "power:GND") (at 0 0 0) (property "Reference" "GND" (at 0 -2.54 0) (effects (font (size 1.27 1.27)))))\n')
-            f.write(')\n')
+    # 1. Create the .kicad_pro file
+    pro_path = os.path.join(project_dir, f"{project_name}.kicad_pro")
+    create_kicad_project(project_name, project_dir)
 
-        # 3) Zip project for download
-        zip_path = os.path.join(export_dir, f"{base}.kicad_project.zip")
-        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-            for root, _, files in os.walk(proj_dir):
-                for f in files:
-                    fp = os.path.join(root, f)
-                    zf.write(fp, arcname=os.path.relpath(fp, proj_dir))
+    # 2. Copy the netlist file (can be useful for debugging)
+    shutil.copy(netlist_path, project_dir)
+
+    # 3. --- Parse netlist for components and nets ---
+    with open(netlist_path, 'r') as f:
+        netlist = f.read()
+    
+    # Find all components
+    comp_pattern = re.compile(r'<comp ref="(.*?)">.*?<value>(.*?)</value>.*?<libsource lib="(.*?)" part="(.*?)"', re.DOTALL)
+    comps = comp_pattern.findall(netlist)
+    
+    # Find all nets
+    net_pattern = re.compile(r'<net name="(.*?)" code="(\d+)">(.*?)</net>', re.DOTALL)
+    nets = net_pattern.findall(netlist)
+    
+    # Map: ref -> (value, lib, part)
+    comp_map = {ref: (value, lib, part) for ref, value, lib, part in comps}
+    
+    # Map: net name -> list of (ref, pin)
+    net_map = {}
+    for net_name, code, net_body in nets:
+        net_map[net_name] = re.findall(r'<node ref="(.*?)" pin="(.*?)"', net_body)
+
+    # 4. --- Generate the .kicad_sch file ---
+    sch_path = os.path.join(project_dir, f"{project_name}.kicad_sch")
+
+    # Simple placement algorithm: place components in a column
+    placements = {}
+    x, y = 100.0, 80.0
+    for ref in comp_map.keys():
+        placements[ref] = (x, y)
+        y += 60.0 # spacing
+
+    # Build the schematic file content
+    sch_content = [
+        '(kicad_sch (version 20211123) (generator "skidl_agent")\n',
+        f'  (uuid {uuid.uuid4()})\n',
+        '  (paper "A4")\n'
+    ]
+
+    # Add symbols (components) to the schematic
+    for ref, (value, lib, part) in comp_map.items():
+        pos_x, pos_y = placements[ref]
         
-        log(f"✓ Created KiCad project ZIP: {zip_path}")
-        return zip_path
+        sch_content.append(
+            f'  (symbol (lib_id "{lib}:{part}") (at {pos_x:.2f} {pos_y:.2f} 0) (unit 1) (uuid {uuid.uuid4()})\n'
+            f'    (property "Reference" "{ref}" (at {pos_x:.2f} {pos_y - 2.54:.2f} 0) (effects (font (size 1.27 1.27))))\n'
+            f'    (property "Value" "{value}" (at {pos_x:.2f} {pos_y + 2.54:.2f} 0) (effects (font (size 1.27 1.27))))\n'
+            '  )\n'
+        )
+
+    # Add wires and net labels
+    kicad_libs_path = os.path.abspath("libraries")
+    for net_name, nodes in net_map.items():
+        if len(nodes) < 2: continue # Skip unconnected nets
+
+        net_uuid = uuid.uuid4()
         
-    except FileNotFoundError:
-        raise Exception("❌ KiCad CLI not found – install KiCad 7+ or make it reachable in PATH.")
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"❌ KiCad CLI error: {str(e)}")
-    except Exception as e:
-        raise Exception(f"❌ Error creating project: {str(e)}")
+        # Get pin locations for all components in the net
+        pin_coords = {}
+        for ref, pin_num in nodes:
+            if ref in comp_map:
+                value, lib, part = comp_map[ref]
+                lib_file = os.path.join(kicad_libs_path, f"{lib}.kicad_sym")
+                
+                pin_locations = get_pin_locations(part, lib_file)
+                
+                if pin_num in pin_locations:
+                    part_x, part_y = placements[ref]
+                    pin_rel_x, pin_rel_y = pin_locations[pin_num]
+                    # KiCad uses inverted Y-axis for symbols internally
+                    pin_abs_x = part_x + pin_rel_x 
+                    pin_abs_y = part_y - pin_rel_y
+                    pin_coords[(ref, pin_num)] = (pin_abs_x, pin_abs_y)
+
+        # Draw wires as net labels for simplicity
+        for (ref, pin_num), (px, py) in pin_coords.items():
+            # Draw a short stub from the pin
+            label_x, label_y = (px + 5.08, py) if px < placements[ref][0] else (px - 5.08, py)
+            sch_content.append(
+                f'  (wire (pts (xy {px:.2f} {py:.2f}) (xy {label_x:.2f} {label_y:.2f})) (stroke (width 0.1524) (type default)) (uuid {uuid.uuid4()}))\n'
+            )
+            # Add a net label to the stub
+            sch_content.append(
+                f'  (global_label "{net_name}" (shape input) (at {label_x:.2f} {label_y:.2f} 0) (effects (font (size 1.27 1.27))) (uuid {net_uuid}))\n'
+            )
+
+    sch_content.append(')') # Close the kicad_sch block
+
+    # Write the content to the schematic file
+    with open(sch_path, 'w', encoding='utf-8') as f:
+        f.write("".join(sch_content))
+
+    # 5. Zip the project directory
+    zip_path = os.path.join("kicad_projects", f"{project_name}.zip")
+    with zipfile.ZipFile(zip_path, 'w') as zipf:
+        for root, _, files in os.walk(project_dir):
+            for file in files:
+                zipf.write(os.path.join(root, file),
+                           os.path.relpath(os.path.join(root, file), project_dir))
+    
+    return zip_path
 
 class CircuitGenerator:
     def __init__(self):

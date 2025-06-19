@@ -1,6 +1,27 @@
-INFO: No errors or warnings found while generating netlist.
+WARNING: PySpice does not support Python 2, so SPICE simulation is not possible. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\<frozen importlib._bootstrap_external>:995=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\<frozen importlib._bootstrap>:488]
+ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:101=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
+ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:101=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
+ERROR: No footprint for R/R3. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:101=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
+INFO: 0 warnings found while generating netlist.
+INFO: 3 errors found while generating netlist.
 
-WARNING: Schematic generation is not implemented for KiCad version 8. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:117=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:380]
-INFO: 1 warnings found while generating schematic.
-INFO: 0 errors found while generating schematic.
+ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:101=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
+ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:101=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
+ERROR: No footprint for R/R3. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:101=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:441]
+ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R3. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R6. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R7. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R8. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R9. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+INFO: 0 warnings found while generating netlist.
+INFO: 7 errors found while generating netlist.
 
+ERROR: No footprint for R/R1. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R2. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R3. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R6. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R7. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R8. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]
+ERROR: No footprint for R/R9. @ [C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\interface\chat_ui.py:103=>C:\Users\sdine\Generatingcircuitagent\Generatingcircuitagent\generate_circuit.py:534]

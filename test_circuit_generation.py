@@ -29,33 +29,51 @@ def test_circuit_generation():
         # Test 1: Voltage Divider
         print("\n1. Testing Voltage Divider...")
         try:
-            schematic_file = create_voltage_divider(vin=5.0, vout=3.3)
-            if os.path.exists(schematic_file):
-                print(f"✅ Voltage divider created: {os.path.basename(schematic_file)}")
+            result = create_voltage_divider(input_voltage=5.0, output_voltage=3.3)
+            if result and 'download_path' in result:
+                download_path = result['download_path']
+                if os.path.exists(download_path):
+                    print(f"✅ Voltage divider created: {os.path.basename(download_path)}")
+                    print(f"   Type: {result.get('type', 'unknown')}")
+                    print(f"   Response: {result.get('response', 'No response')}")
+                else:
+                    print(f"❌ Voltage divider file not found: {download_path}")
             else:
-                print("❌ Voltage divider file not found")
+                print("❌ Voltage divider returned invalid result")
         except Exception as e:
             print(f"❌ Voltage divider failed: {str(e)}")
         
         # Test 2: RC Low-Pass Filter
         print("\n2. Testing RC Low-Pass Filter...")
         try:
-            schematic_file = create_rc_low_pass_filter(cutoff_freq=1000)
-            if os.path.exists(schematic_file):
-                print(f"✅ RC filter created: {os.path.basename(schematic_file)}")
+            result = create_rc_low_pass_filter(cutoff_freq=1000)
+            if result and 'download_path' in result:
+                download_path = result['download_path']
+                if os.path.exists(download_path):
+                    print(f"✅ RC filter created: {os.path.basename(download_path)}")
+                    print(f"   Type: {result.get('type', 'unknown')}")
+                    print(f"   Response: {result.get('response', 'No response')}")
+                else:
+                    print(f"❌ RC filter file not found: {download_path}")
             else:
-                print("❌ RC filter file not found")
+                print("❌ RC filter returned invalid result")
         except Exception as e:
             print(f"❌ RC filter failed: {str(e)}")
         
         # Test 3: LED Circuit
         print("\n3. Testing LED Circuit...")
         try:
-            schematic_file = create_led_circuit(v_source=5.0, v_led=2.0, i_led=0.020)
-            if os.path.exists(schematic_file):
-                print(f"✅ LED circuit created: {os.path.basename(schematic_file)}")
+            result = create_led_circuit(voltage=5.0, led_voltage=2.0, led_current=0.020)
+            if result and 'download_path' in result:
+                download_path = result['download_path']
+                if os.path.exists(download_path):
+                    print(f"✅ LED circuit created: {os.path.basename(download_path)}")
+                    print(f"   Type: {result.get('type', 'unknown')}")
+                    print(f"   Response: {result.get('response', 'No response')}")
+                else:
+                    print(f"❌ LED circuit file not found: {download_path}")
             else:
-                print("❌ LED circuit file not found")
+                print("❌ LED circuit returned invalid result")
         except Exception as e:
             print(f"❌ LED circuit failed: {str(e)}")
         

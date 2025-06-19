@@ -1,8 +1,45 @@
-from skidl import *
 import os
-import urllib.request
-from datetime import datetime
 import json
+import urllib.request
+import subprocess
+import shutil
+import tempfile
+import zipfile
+from datetime import datetime
+from skidl import *
+from skidl.pyspice import *
+
+def find_closest_e12_value(target_value):
+    """Find the closest E12 resistor value"""
+    e12_values = [10, 12, 15, 18, 22, 27, 33, 39, 47, 56, 68, 82]
+    
+    # Handle different magnitudes
+    magnitude = 1
+    while target_value > 100:
+        target_value /= 10
+        magnitude *= 10
+    while target_value < 10:
+        target_value *= 10
+        magnitude /= 10
+    
+    # Find closest E12 value
+    closest = min(e12_values, key=lambda x: abs(x - target_value))
+    return int(closest * magnitude)
+
+def find_closest_capacitor_value(target_value):
+    """Find the closest standard capacitor value"""
+    standard_values = [0.1e-6, 1e-6, 10e-6, 100e-6, 1e-3]  # 0.1µF, 1µF, 10µF, 100µF, 1mF
+    
+    # Find closest standard value
+    closest = min(standard_values, key=lambda x: abs(x - target_value))
+    
+    # Format for display
+    if closest >= 1e-3:
+        return f"{closest*1e3}mF"
+    elif closest >= 1e-6:
+        return f"{closest*1e6}µF"
+    else:
+        return f"{closest*1e9}nF"
 
 def log(msg):
     """Log messages with timestamp"""
@@ -10,38 +47,58 @@ def log(msg):
 
 def setup_kicad_env():
     """Setup KiCad environment and download required libraries"""
-    log("Setting up KiCad environment...")
+    print("[{}] Setting up KiCad environment...".format(datetime.now().strftime("%H:%M:%S")))
     
-    # Create libraries directory
-    libraries_dir = os.path.join(os.getcwd(), 'libraries')
-    os.makedirs(libraries_dir, exist_ok=True)
-    
-    # Download required KiCad libraries
-    required_libs = {
-        'Device.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/Device.kicad_sym',
-        'power.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/power.kicad_sym',
-        'LED.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/LED.kicad_sym'
-    }
-    
-    for lib_name, lib_url in required_libs.items():
-        lib_path = os.path.join(libraries_dir, lib_name)
-        if not os.path.exists(lib_path):
-            log(f"Downloading {lib_name}...")
-            urllib.request.urlretrieve(lib_url, lib_path)
-            log(f"✓ Downloaded {lib_name}")
-    
-    # Set up library search paths
-    lib_search_paths_kicad = lib_search_paths_skidl = [os.path.abspath(libraries_dir)]
-    
-    # Set environment variables
-    os.environ['KICAD_SYMBOL_DIR'] = os.path.abspath(libraries_dir)
-    os.environ['KICAD6_SYMBOL_DIR'] = os.path.abspath(libraries_dir)
-    os.environ['KICAD7_SYMBOL_DIR'] = os.path.abspath(libraries_dir)
-    os.environ['KICAD8_SYMBOL_DIR'] = os.path.abspath(libraries_dir)
-    
-    # Set default tool
-    set_default_tool(KICAD)
-    log("✓ KiCad environment setup complete")
+    try:
+        # Create libraries directory
+        libraries_dir = os.path.join(os.getcwd(), 'libraries')
+        os.makedirs(libraries_dir, exist_ok=True)
+        
+        # Required libraries with their URLs
+        required_libs = {
+            'Device.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/Device.kicad_sym',
+            'power.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/power.kicad_sym',
+            'LED.kicad_sym': 'https://gitlab.com/kicad/libraries/kicad-symbols/-/raw/master/LED.kicad_sym'
+        }
+        
+        # Download missing libraries
+        for lib_name, lib_url in required_libs.items():
+            lib_path = os.path.join(libraries_dir, lib_name)
+            if not os.path.exists(lib_path):
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Downloading {lib_name}...")
+                try:
+                    urllib.request.urlretrieve(lib_url, lib_path)
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] ✓ Downloaded {lib_name}")
+                except Exception as e:
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] ✗ Failed to download {lib_name}: {e}")
+                    return False
+            else:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] ✓ {lib_name} already exists")
+        
+        # Add the local libraries directory to skidl's search path
+        from skidl import lib_search_paths
+        if isinstance(lib_search_paths, list):
+            lib_search_paths.append(os.path.abspath(libraries_dir))
+        else:
+            # If it's a dict, convert to list and add
+            lib_search_paths = [os.path.abspath(libraries_dir)]
+        
+        # Set default tool to KiCad
+        set_default_tool(KICAD)
+        
+        # Test library loading
+        try:
+            # Test if we can load a basic component
+            test_resistor = Part("Device", "R")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✓ KiCad environment setup complete")
+            return True
+        except Exception as e:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] ✗ Library test failed: {e}")
+            return False
+            
+    except Exception as e:
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] ✗ KiCad environment setup failed: {e}")
+        return False
 
 def create_kicad_project(circuit_name: str, output_dir: str) -> str:
     """Create a KiCad project file (.kicad_pro) that can be opened directly in KiCad"""
@@ -329,168 +386,371 @@ def create_kicad_project(circuit_name: str, output_dir: str) -> str:
     log(f"✓ Created KiCad project file: {project_file}")
     return project_file
 
-def create_voltage_divider(vin=5.0, vout=3.3):
-    """Create a voltage divider circuit with proper horizontal layout and return the schematic file path."""
-    # Calculate resistor values for voltage divider
-    # Using R1 = 10k, calculate R2 for desired output voltage
-    r1_value = 10000  # 10k resistor
-    r2_value = int(r1_value * (vout / (vin - vout)))
-    
-    # Create output directory
-    output_dir = os.path.join(os.getcwd(), 'kicad_output', 'voltage_divider')
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Set up circuit with descriptive name
-    circuit_name = f'voltage_divider_{int(vin)}v_{int(vout*10)}v'
-    default_circuit.name = circuit_name
-    default_circuit.description = f"Voltage divider converting {vin}V to {vout}V using {r1_value/1000}k and {r2_value/1000}k resistors"
-    
-    # Define nets with clear naming
-    vcc = Net('VCC')      # Input voltage (5V)
-    gnd = Net('GND')      # Ground (0V)
-    out = Net('OUT')      # Output voltage (3.3V)
-    
-    # Create components with proper footprints
-    r1 = Part("Device", "R", value=f"{r1_value}", footprint="Resistor_SMD:R_0805_2012Metric")
-    r2 = Part("Device", "R", value=f"{r2_value}", footprint="Resistor_SMD:R_0805_2012Metric")
-    
-    # Set component properties for better identification
-    r1.ref = "R1"
-    r2.ref = "R2"
-    r1.value = f"{r1_value}"
-    r2.value = f"{r2_value}"
-    
-    # Connect components in proper voltage divider layout: VCC → R1 → OUT → R2 → GND
-    # This creates a horizontal layout that's easy to read
-    vcc += r1[1]          # VCC connects to R1 pin 1
-    r1[2] += out          # R1 pin 2 connects to output
-    out += r2[1]          # Output connects to R2 pin 1
-    r2[2] += gnd          # R2 pin 2 connects to ground
-    
-    # Generate KiCad files
-    netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
-    log(f"Generating netlist: {netlist_file}")
-    generate_netlist(file_=netlist_file)
-    
-    # Create KiCad project file
-    project_file = create_kicad_project(circuit_name, output_dir)
-    
-    # Create schematic file 
-    schematic_file = os.path.join(output_dir, f"{circuit_name}.kicad_sch")
-    generate_schematic(file_=schematic_file)
-    
-    log(f"✓ Generated KiCad files in: {output_dir}")
-    log(f"✓ Voltage divider: {vin}V → {vout}V using R1={r1_value}Ω, R2={r2_value}Ω")
-    return schematic_file
+def create_voltage_divider(input_voltage: float = 5.0, output_voltage: float = 3.3, current: float = 0.001) -> dict:
+    """Create a voltage divider circuit"""
+    try:
+        # Setup KiCad environment
+        if not setup_kicad_env():
+            return {"error": "Failed to setup KiCad environment"}
+        
+        # Calculate resistor values
+        r2_value = output_voltage / current
+        r1_value = (input_voltage - output_voltage) / current
+        
+        # Use standard E12 resistor values
+        r1_standard = find_closest_e12_value(r1_value)
+        r2_standard = find_closest_e12_value(r2_value)
+        
+        # Create circuit name
+        circuit_name = f"voltage_divider_{input_voltage}v_{output_voltage}v"
+        output_dir = os.path.join("kicad_output", "voltage_divider")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Create KiCad project file
+        project_file = create_kicad_project(circuit_name, output_dir)
+        
+        # Create circuit using SKiDL
+        # from skidl import *  # Already imported at top
+        
+        # Set up circuit
+        default_circuit.name = circuit_name
+        default_circuit.description = f"Voltage divider converting {input_voltage}V to {output_voltage}V"
+        
+        # Define nets with clear naming
+        vcc = Net('VCC')      # Input voltage
+        gnd = Net('GND')      # Ground
+        out = Net('OUT')      # Output voltage
+        
+        # Create components with proper footprints
+        r1 = Part("Device", "R", value=f"{r1_standard}Ω", footprint="Resistor_SMD:R_0805_2012Metric")
+        r2 = Part("Device", "R", value=f"{r2_standard}Ω", footprint="Resistor_SMD:R_0805_2012Metric")
+        
+        # Set component properties
+        r1.ref = "R1"
+        r2.ref = "R2"
+        
+        # Connect in proper layout: VCC → R1 → OUT → R2 → GND
+        vcc += r1[1]          # VCC connects to R1 pin 1
+        r1[2] += out          # R1 pin 2 connects to output
+        out += r2[1]          # Output connects to R2 pin 1
+        r2[2] += gnd          # R2 pin 2 connects to ground
+        
+        # Generate netlist
+        netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
+        log(f"Generating netlist: {netlist_file}")
+        generate_netlist(file_=netlist_file)
+        
+        # NEW: convert netlist to KiCad project and create ZIP
+        try:
+            zip_path = net_to_project(netlist_file, output_dir)
+            # Clean up the netlist file (optional - keep workspace clean)
+            os.remove(netlist_file)
+            
+            generated_files = [zip_path]
+            log(f"✓ Generated KiCad project ZIP: {zip_path}")
+            log(f"✓ Voltage divider: {input_voltage}V → {output_voltage}V using R1={r1_standard}Ω, R2={r2_standard}Ω")
+            
+            return {
+                "type": "voltage_divider",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(zip_path),
+                "download_path": zip_path,
+                "response": f"✅ Circuit generated successfully! Voltage divider converting {input_voltage}V to {output_voltage}V using R1={r1_standard}Ω and R2={r2_standard}Ω",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        except Exception as e:
+            log(f"Error creating KiCad project: {e}")
+            # Fallback to netlist if KiCad CLI fails
+            generated_files = [netlist_file]
+            return {
+                "type": "voltage_divider",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(netlist_file),
+                "download_path": netlist_file,
+                "response": f"✅ Circuit generated successfully! Voltage divider converting {input_voltage}V to {output_voltage}V using R1={r1_standard}Ω and R2={r2_standard}Ω (Netlist only - KiCad CLI not available)",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        
+    except Exception as e:
+        log(f"Error creating voltage divider: {e}")
+        return {"error": f"Failed to create voltage divider: {str(e)}"}
 
-def create_rc_low_pass_filter(cutoff_freq=1000):
-    """Create an RC low-pass filter with proper horizontal layout and return the schematic file path."""
-    # Calculate component values for RC low-pass filter
-    # Cutoff frequency: f = 1/(2πRC)
-    # Using C = 0.1µF, calculate R for desired cutoff frequency
-    c_value = 0.1e-6  # 0.1µF capacitor
-    r_value = int(1 / (2 * 3.14159 * cutoff_freq * c_value))
+def create_rc_low_pass_filter(cutoff_freq: float = 1000.0) -> dict:
+    """Create an RC low-pass filter circuit"""
+    try:
+        # Setup KiCad environment
+        if not setup_kicad_env():
+            return {"error": "Failed to setup KiCad environment"}
+        
+        # Calculate component values (assuming R = 10kΩ)
+        r_value = 10000  # 10kΩ
+        c_value = 1 / (2 * 3.14159 * cutoff_freq * r_value)  # C = 1/(2πfR)
+        
+        # Use standard capacitor value
+        c_standard = find_closest_capacitor_value(c_value)
+        
+        # Create circuit name
+        circuit_name = f"rc_low_pass_{cutoff_freq}hz"
+        output_dir = os.path.join("kicad_output", "rc_low_pass_filter")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Create KiCad project file
+        project_file = create_kicad_project(circuit_name, output_dir)
+        
+        # Create circuit using SKiDL
+        # from skidl import *  # Already imported at top
+        
+        # Set up circuit
+        default_circuit.name = circuit_name
+        default_circuit.description = f"RC low-pass filter with {cutoff_freq}Hz cutoff frequency"
+        
+        # Define nets with clear naming
+        vin = Net('VIN')      # Input signal
+        vout = Net('VOUT')    # Output signal
+        gnd = Net('GND')      # Ground
+        
+        # Create components with proper footprints
+        r1 = Part("Device", "R", value=f"{r_value}Ω", footprint="Resistor_SMD:R_0805_2012Metric")
+        c1 = Part("Device", "C", value=f"{c_standard}F", footprint="Capacitor_SMD:C_0805_2012Metric")
+        
+        # Set component properties
+        r1.ref = "R1"
+        c1.ref = "C1"
+        
+        # Connect in proper layout: VIN → R → VOUT → C → GND
+        vin += r1[1]          # Input connects to R pin 1
+        r1[2] += vout         # R pin 2 connects to output
+        vout += c1[1]         # Output connects to C pin 1
+        c1[2] += gnd          # C pin 2 connects to ground
+        
+        # Generate netlist
+        netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
+        log(f"Generating netlist: {netlist_file}")
+        generate_netlist(file_=netlist_file)
+        
+        # NEW: convert netlist to KiCad project and create ZIP
+        try:
+            zip_path = net_to_project(netlist_file, output_dir)
+            # Clean up the netlist file (optional - keep workspace clean)
+            os.remove(netlist_file)
+            
+            generated_files = [zip_path]
+            log(f"✓ Generated KiCad project ZIP: {zip_path}")
+            log(f"✓ RC filter: {cutoff_freq}Hz cutoff using R={r_value}Ω, C={c_standard}F")
+            
+            return {
+                "type": "rc_filter",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(zip_path),
+                "download_path": zip_path,
+                "response": f"✅ Circuit generated successfully! RC low-pass filter with {cutoff_freq}Hz cutoff frequency using R={r_value}Ω and C={c_standard}F",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        except Exception as e:
+            log(f"Error creating KiCad project: {e}")
+            # Fallback to netlist if KiCad CLI fails
+            generated_files = [netlist_file]
+            return {
+                "type": "rc_filter",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(netlist_file),
+                "download_path": netlist_file,
+                "response": f"✅ Circuit generated successfully! RC low-pass filter with {cutoff_freq}Hz cutoff frequency using R={r_value}Ω and C={c_standard}F (Netlist only - KiCad CLI not available)",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        
+    except Exception as e:
+        log(f"Error creating RC filter: {e}")
+        return {"error": f"Failed to create RC filter: {str(e)}"}
 
-    output_dir = os.path.join(os.getcwd(), 'kicad_output', 'rc_low_pass_filter')
-    os.makedirs(output_dir, exist_ok=True)
-    
-    circuit_name = f'rc_low_pass_{cutoff_freq}hz'
-    default_circuit.name = circuit_name
-    default_circuit.description = f"RC Low-Pass Filter with {cutoff_freq}Hz cutoff using {r_value}Ω and {c_value*1e6}µF"
-    
-    # Define nets with clear naming
-    vin = Net('VIN')      # Input signal
-    vout = Net('VOUT')    # Output signal (filtered)
-    gnd = Net('GND')      # Ground reference
-    
-    # Create components with proper footprints
-    r = Part('Device', 'R', value=f'{r_value} Ohms', footprint='Resistor_SMD:R_0805_2012Metric')
-    c = Part('Device', 'C', value=f'{c_value*1e6}µF', footprint='Capacitor_SMD:C_0805_2012Metric')
-    
-    # Set component properties for better identification
-    r.ref = "R1"
-    c.ref = "C1"
-    r.value = f"{r_value}Ω"
-    c.value = f"{c_value*1e6}µF"
-    
-    # Connect components in proper RC filter layout: VIN → R → VOUT → C → GND
-    # This creates a horizontal layout: Input → Resistor → Output → Capacitor → Ground
-    vin += r[1]           # Input connects to resistor pin 1
-    r[2] += vout          # Resistor pin 2 connects to output
-    vout += c[1]          # Output connects to capacitor pin 1
-    gnd += c[2]           # Ground connects to capacitor pin 2
+def create_led_circuit(voltage: float = 5.0, led_voltage: float = 2.0, led_current: float = 0.02) -> dict:
+    """Create an LED circuit with current limiting resistor"""
+    try:
+        # Setup KiCad environment
+        if not setup_kicad_env():
+            return {"error": "Failed to setup KiCad environment"}
+        
+        # Calculate resistor value
+        r_value = (voltage - led_voltage) / led_current
+        
+        # Use standard E12 resistor value
+        r_standard = find_closest_e12_value(r_value)
+        
+        # Create circuit name
+        circuit_name = f"led_circuit_{voltage}v"
+        output_dir = os.path.join("kicad_output", "led_circuit")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Create KiCad project file
+        project_file = create_kicad_project(circuit_name, output_dir)
+        
+        # Create circuit using SKiDL
+        # from skidl import *  # Already imported at top
+        
+        # Set up circuit
+        default_circuit.name = circuit_name
+        default_circuit.description = f"LED circuit with {voltage}V supply"
+        
+        # Define nets with clear naming
+        vcc = Net('VCC')      # Supply voltage
+        gnd = Net('GND')      # Ground
+        
+        # Create components with proper footprints
+        r1 = Part("Device", "R", value=f"{r_standard}Ω", footprint="Resistor_SMD:R_0805_2012Metric")
+        led1 = Part("LED", "LED", value="LED", footprint="LED_SMD:LED_0805_2012Metric")
+        
+        # Set component properties
+        r1.ref = "R1"
+        led1.ref = "D1"
+        
+        # Connect in proper layout: VCC → R → LED → GND
+        vcc += r1[1]          # VCC connects to R pin 1
+        r1[2] += led1[1]      # R pin 2 connects to LED anode
+        led1[2] += gnd        # LED cathode connects to ground
+        
+        # Generate netlist
+        netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
+        log(f"Generating netlist: {netlist_file}")
+        generate_netlist(file_=netlist_file)
+        
+        # NEW: convert netlist to KiCad project and create ZIP
+        try:
+            zip_path = net_to_project(netlist_file, output_dir)
+            # Clean up the netlist file (optional - keep workspace clean)
+            os.remove(netlist_file)
+            
+            generated_files = [zip_path]
+            log(f"✓ Generated KiCad project ZIP: {zip_path}")
+            log(f"✓ LED circuit: {voltage}V supply with R={r_standard}Ω current limiting")
+            
+            return {
+                "type": "led_circuit",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(zip_path),
+                "download_path": zip_path,
+                "response": f"✅ Circuit generated successfully! LED circuit with {voltage}V supply using R={r_standard}Ω current limiting resistor",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        except Exception as e:
+            log(f"Error creating KiCad project: {e}")
+            # Fallback to netlist if KiCad CLI fails
+            generated_files = [netlist_file]
+            return {
+                "type": "led_circuit",
+                "name": circuit_name,
+                "circuit_dir": output_dir,
+                "generated_files": generated_files,
+                "download_label": os.path.basename(netlist_file),
+                "download_path": netlist_file,
+                "response": f"✅ Circuit generated successfully! LED circuit with {voltage}V supply using R={r_standard}Ω current limiting resistor (Netlist only - KiCad CLI not available)",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        
+    except Exception as e:
+        log(f"Error creating LED circuit: {e}")
+        return {"error": f"Failed to create LED circuit: {str(e)}"}
 
-    # Generate KiCad files
-    netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
-    log(f"Generating netlist: {netlist_file}")
-    generate_netlist(file_=netlist_file)
-    
-    # Create KiCad project file
-    project_file = create_kicad_project(circuit_name, output_dir)
-    
-    # Create schematic file 
-    schematic_file = os.path.join(output_dir, f"{circuit_name}.kicad_sch")
-    generate_schematic(file_=schematic_file)
-    
-    log(f"✓ Generated KiCad files in: {output_dir}")
-    log(f"✓ RC filter: {cutoff_freq}Hz cutoff using R={r_value}Ω, C={c_value*1e6}µF")
-    return schematic_file
+def net_to_project(net_path: str, export_dir: str) -> str:
+    """
+    Convert SKiDL netlist to a minimal KiCad project ( .kicad_pro + .kicad_sch )
+    using kicad-cli. Return path to a zipped project for download.
+    """
+    try:
+        base = os.path.splitext(os.path.basename(net_path))[0]
+        proj_dir = os.path.join(export_dir, base)
+        os.makedirs(proj_dir, exist_ok=True)
 
-def create_led_circuit(v_source=5.0, v_led=2.0, i_led=0.020):
-    """Create a simple LED circuit with current limiting resistor and proper horizontal layout."""
-    # Calculate the current-limiting resistor value
-    # R = (V_source - V_LED) / I_LED
-    r_value = int((v_source - v_led) / i_led)
-    
-    output_dir = os.path.join(os.getcwd(), 'kicad_output', 'led_circuit')
-    os.makedirs(output_dir, exist_ok=True)
+        # 1) Create empty project
+        subprocess.check_call(["kicad-cli", "pcb", "new", f"{proj_dir}/{base}.kicad_pro"])
 
-    circuit_name = 'simple_led_circuit'
-    default_circuit.name = circuit_name
-    default_circuit.description = f"LED circuit with current limiting: {v_source}V → {v_led}V LED at {i_led*1000}mA using {r_value}Ω resistor"
-    
-    # Define nets with clear naming
-    vcc = Net('VCC')      # Power supply (5V)
-    gnd = Net('GND')      # Ground (0V)
-    
-    # Create components with proper footprints
-    r = Part('Device', 'R', value=f'{r_value} Ohms', footprint='Resistor_SMD:R_0805_2012Metric')
-    d = Part('Device', 'LED', footprint='LED_SMD:LED_0805_2012Metric')
-    
-    # Set component properties for better identification
-    r.ref = "R1"
-    d.ref = "D1"
-    r.value = f"{r_value}Ω"
-    d.value = "LED"
-    
-    # Connect components in proper LED circuit layout: VCC → R → LED → GND
-    # This creates a horizontal layout: Power → Resistor → LED → Ground
-    vcc += r[1]           # VCC connects to resistor pin 1
-    r[2] += d[1]          # Resistor pin 2 connects to LED anode
-    d[2] += gnd           # LED cathode connects to ground
+        # 2) Import netlist into schematic
+        subprocess.check_call([
+            "kicad-cli", "sch", "import-netlist",
+            "--schematic", f"{proj_dir}/{base}.kicad_sch",
+            "--netlist", net_path
+        ])
 
-    # Generate KiCad files
-    netlist_file = os.path.join(output_dir, f"{circuit_name}.net")
-    log(f"Generating netlist: {netlist_file}")
-    generate_netlist(file_=netlist_file)
+        # 3) Zip project for download
+        zip_path = os.path.join(export_dir, f"{base}.kicad_project.zip")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for root, _, files in os.walk(proj_dir):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    zf.write(fp, arcname=os.path.relpath(fp, proj_dir))
+        
+        log(f"✓ Created KiCad project ZIP: {zip_path}")
+        return zip_path
+        
+    except FileNotFoundError:
+        raise Exception("❌ KiCad CLI not found – install KiCad 7+ or make it reachable in PATH.")
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"❌ KiCad CLI error: {str(e)}")
+    except Exception as e:
+        raise Exception(f"❌ Error creating project: {str(e)}")
+
+class CircuitGenerator:
+    def __init__(self):
+        self.setup_kicad_environment()
     
-    # Create KiCad project file
-    project_file = create_kicad_project(circuit_name, output_dir)
+    def setup_kicad_environment(self):
+        """Setup KiCad environment"""
+        return setup_kicad_env()
     
-    # Create schematic file 
-    schematic_file = os.path.join(output_dir, f"{circuit_name}.kicad_sch")
-    generate_schematic(file_=schematic_file)
+    def generate_voltage_divider(self, input_voltage=5.0, output_voltage=3.3):
+        """Generate voltage divider circuit"""
+        return create_voltage_divider(input_voltage, output_voltage)
     
-    log(f"✓ Generated KiCad files in: {output_dir}")
-    log(f"✓ LED circuit: {v_source}V → {v_led}V LED at {i_led*1000}mA using R={r_value}Ω")
-    return schematic_file
+    def generate_rc_filter(self, cutoff_freq=1000.0):
+        """Generate RC low-pass filter circuit"""
+        return create_rc_low_pass_filter(cutoff_freq)
+    
+    def generate_led_circuit(self, voltage=5.0):
+        """Generate LED circuit"""
+        return create_led_circuit(voltage)
+    
+    def generate_custom_circuit(self, user_request: str):
+        """Generate custom circuit using LLM"""
+        try:
+            # Import LLM engine
+            from llm_engine import LLMEngine
+            
+            # Initialize LLM engine
+            llm_engine = LLMEngine()
+            
+            # If voltage divider requested
+            if 'voltage_divider' in user_request:
+                return create_voltage_divider(input_voltage=5.0, output_voltage=3.3)
+            
+            # Generate circuit using LLM
+            result = llm_engine.generate_and_execute_circuit(user_request)
+            
+            if result and 'error' not in result:
+                return result
+            else:
+                return {"error": result.get('error', 'Failed to generate custom circuit')}
+                
+        except Exception as e:
+            return {"error": f"Error generating custom circuit: {str(e)}"}
 
 if __name__ == "__main__":
     # Set up KiCad environment
     setup_kicad_env()
     
     # Create a voltage divider (5V to 3.3V)
-    netlist, project, schematic = create_voltage_divider(5.0, 3.3)
+    netlist, project, schematic = create_voltage_divider(input_voltage=5.0, output_voltage=3.3)
     
     log("\nTo use these files in KiCad:")
     log("1. Open KiCad")

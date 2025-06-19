@@ -17,7 +17,7 @@ setup_kicad_env()
 st.header("1. Voltage Divider (5V to 3.3V)")
 if st.button("Generate Voltage Divider"):
     st.info("Generating your voltage divider... please wait.")
-    schematic_file = create_voltage_divider(vin=5.0, vout=3.3)
+    schematic_file = create_voltage_divider(input_voltage=5.0, output_voltage=3.3)
     st.session_state['voltage_divider_file'] = schematic_file
 
 if 'voltage_divider_file' in st.session_state:
@@ -55,12 +55,13 @@ if 'rc_filter_file' in st.session_state:
 st.header("3. Simple LED Circuit")
 if st.button("Generate LED Circuit"):
     st.info("Generating your LED circuit... please wait.")
-    schematic_file = create_led_circuit()
-    st.session_state['led_circuit_file'] = schematic_file
+    # Use default values for demonstration
+    result = create_led_circuit(voltage=5.0, led_voltage=2.0, led_current=0.02)
+    st.session_state['led_circuit_file'] = result['download_path'] if result and 'download_path' in result else None
 
 if 'led_circuit_file' in st.session_state:
     file_path = st.session_state['led_circuit_file']
-    if os.path.exists(file_path):
+    if file_path and os.path.exists(file_path):
         st.success("LED circuit generated!")
         with open(file_path, "rb") as file:
             st.download_button(
